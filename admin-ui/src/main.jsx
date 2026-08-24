@@ -1,18 +1,24 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 import LoginPage from './pages/auth/LoginPage.jsx'
+import CallbackPage from './pages/auth/CallbackPage.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        {/* Render App for all other routes for now */}
-        <Route path="/*" element={<App />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          {/* Backend redirect về đây kèm ?accessToken=...&refreshToken=... sau khi Google SSO thành công */}
+          <Route path="/auth/callback" element={<CallbackPage />} />
+          {/* Render App for all other routes for now */}
+          <Route path="/*" element={<App />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

@@ -1,25 +1,37 @@
 import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { HOME_BY_ROLE } from '../../utils/constants';
 import './Login.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  // Lỗi do backend redirect về khi Google SSO thất bại: /login?error=...
+  const [error, setError] = useState(searchParams.get('error'));
+  const { login, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const user = await login(email, password);
+      navigate(HOME_BY_ROLE[user.role] || '/', { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-      console.log('Login attempt:', { email, password });
-    }, 1500);
+    }
   };
 
   const handleGoogleLogin = () => {
-    console.log('Redirecting to Google SSO...');
-    // window.location.href = import.meta.env.VITE_OAUTH2_REDIRECT_URL;
+    // Chuyển sang backend /oauth2/authorization/google → Google → /auth/callback
+    loginWithGoogle();
   };
 
   return (
@@ -31,6 +43,8 @@ const LoginPage = () => {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          {error && <div className="login-error">{error}</div>}
+
           <div className="input-group">
             <input
               type="email"
