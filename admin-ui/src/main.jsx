@@ -8,6 +8,7 @@ import LoginPage from './pages/auth/LoginPage.jsx'
 import RegisterPage from './pages/auth/RegisterPage.jsx'
 import CallbackPage from './pages/auth/CallbackPage.jsx'
 import TeacherDashboard from './pages/teacher/ExamManager.jsx'
+import StudentDashboard from './pages/student/ExamList.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -20,6 +21,8 @@ createRoot(document.getElementById('root')).render(
           <Route path="/auth/callback" element={<CallbackPage />} />
           {/* Teacher routes */}
           <Route path="/teacher/*" element={<TeacherDashboard />} />
+          {/* Student routes */}
+          <Route path="/student/*" element={<StudentDashboard />} />
           {/* Render App for all other routes for now */}
           <Route path="/*" element={<App />} />
         </Routes>
