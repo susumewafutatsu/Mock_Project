@@ -100,7 +100,10 @@ const LoginPage = () => {
 
         <div className="register-prompt">
           Chưa có tài khoản?
-          <a href="#" className="register-link">Đăng ký ngay</a>
+          <a href="#" className="register-link" onClick={(e) => {
+            e.preventDefault();
+            navigate('/register');
+          }}>Đăng ký ngay</a>
         </div>
       </div>
     </div>
