@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import QuestionBank from './QuestionBank';
 import './TeacherDashboard.css';
 
 // ─── Mock data ────────────────────────────────────────────────
@@ -309,6 +310,8 @@ export default function TeacherDashboard() {
     },
   ];
 
+  const isQuestionTab = activeNav === 'questions';
+
   const userName  = currentUser?.fullName || currentUser?.email || 'Giáo viên';
   const initials  = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
@@ -357,7 +360,7 @@ export default function TeacherDashboard() {
         {/* Topbar */}
         <header className="td-topbar">
           <div className="td-topbar-left">
-            <h1>Quản lý đề thi & Giao bài</h1>
+            <h1>{isQuestionTab ? 'Ngân hàng câu hỏi' : 'Quản lý đề thi & Giao bài'}</h1>
             <p>Xin chào, {userName.split(' ').slice(-1)[0]}! Hôm nay là thứ {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}.</p>
           </div>
           <div className="td-topbar-right">
@@ -366,12 +369,17 @@ export default function TeacherDashboard() {
               <span>Tìm đề thi...</span>
             </div>
             <button className="td-icon-btn" title="Thông báo"><Bell size={17} /></button>
-            <button className="td-btn-primary" onClick={() => setShowCreateModal(true)}>
-              <Plus size={16} /> Tạo kỳ thi
-            </button>
+            {!isQuestionTab && (
+              <button className="td-btn-primary" onClick={() => setShowCreateModal(true)}>
+                <Plus size={16} /> Tạo kỳ thi
+              </button>
+            )}
           </div>
         </header>
 
+        {isQuestionTab ? (
+          <QuestionBank />
+        ) : (
         <div className="td-content">
           {/* Stats */}
           <div className="td-stats-row">
@@ -532,6 +540,7 @@ export default function TeacherDashboard() {
             </div>
           </div>
         </div>
+        )}
       </main>
 
       {/* ── CREATE EXAM MODAL ── */}
