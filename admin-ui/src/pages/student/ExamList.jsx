@@ -1,53 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard, BookOpen, ClipboardList, BarChart2, Trophy,
   Bell, LogOut, ChevronRight, Clock, Play, CheckCircle,
-  AlertCircle, Search, Star,
+  AlertCircle, Search, Star, Loader2,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { getExams } from '../../services/examService';
 import './StudentDashboard.css';
 
-// ─── Mock Data ─────────────────────────────────────────────────
-const MOCK_EXAMS = [
-  {
-    id: 1,
-    name: 'Kiểm tra giữa kỳ – Toán Đại số Chương 3',
-    subject: 'Toán học',
-    teacher: 'Thầy Huy',
-    questions: 30,
-    duration: 45,
-    deadline: '2026-08-28 07:30',
-    status: 'upcoming',
-    icon: '📐',
-    iconBg: 'rgba(167,139,250,0.15)',
-  },
-  {
-    id: 2,
-    name: 'Ôn tập Ngữ pháp N4 – Thì hiện tại tiến diễn',
-    subject: 'Tiếng Nhật',
-    teacher: 'Cô Lan',
-    questions: 20,
-    duration: 25,
-    deadline: '2026-08-25 23:59',
-    status: 'open',
-    icon: '🇯🇵',
-    iconBg: 'rgba(251,191,36,0.15)',
-  },
-  {
-    id: 3,
-    name: 'Luyện đọc IELTS – Reading Band 6.0',
-    subject: 'Tiếng Anh',
-    teacher: 'Cô Mai',
-    questions: 40,
-    duration: 60,
-    deadline: '2026-08-20 09:00',
-    status: 'open',
-    icon: '📖',
-    iconBg: 'rgba(96,165,250,0.15)',
-  },
-];
+// ─── Trạng thái đề thi ─────────────────────────────────────────
+// Server đã tính sẵn `availability` cho từng đề (xem ExamResponse.Availability),
+// client chỉ tra bảng này chứ không tự so lại startTime/endTime — hai bên so giờ
+// riêng là cách chắc chắn nhất để lệch nhau.
+const AVAILABILITY = {
+  OPEN:         { label: 'Đang mở',      cls: 'open',     action: 'Làm bài',      enter: true },
+  IN_PROGRESS:  { label: 'Đang làm dở',  cls: 'open',     action: 'Tiếp tục',     enter: true },
+  UPCOMING:     { label: 'Sắp diễn ra',  cls: 'upcoming', action: 'Chưa mở',      enter: false },
+  SUBMITTED:    { label: 'Đã làm',       cls: 'done',     action: 'Đã nộp',       enter: false },
+  CLOSED:       { label: 'Đã hết hạn',   cls: 'missed',   action: 'Đã đóng',      enter: false },
+  NO_QUESTIONS: { label: 'Chưa có câu hỏi', cls: 'missed', action: 'Chưa có câu', enter: false },
+};
 
+const SUBJECT_ICON = {
+  'Toán học': { icon: '📐', bg: 'rgba(167,139,250,0.15)' },
+  'Tiếng Nhật': { icon: '🇯🇵', bg: 'rgba(251,191,36,0.15)' },
+  'Tiếng Anh': { icon: '📖', bg: 'rgba(96,165,250,0.15)' },
+};
+const DEFAULT_ICON = { icon: '📝', bg: 'rgba(52,211,153,0.15)' };
+
+/** "28/08 07:30" — LocalDateTime của server về dạng "2026-08-28T07:30:00". */
+function formatDeadline(value) {
+  if (!value) return 'không giới hạn';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// Đề thi lấy thật từ GET /api/student/exams. Các panel điểm / xếp hạng bên dưới
+// vẫn là mock vì endpoint tương ứng chưa có.
 const MOCK_RESULTS = [
   { id: 1, name: 'Từ vựng N4 – Tuần 8',        subject: 'Tiếng Nhật', score: 90, total: 100, date: '22/08', grade: 'A' },
   { id: 2, name: 'Toán – Bất phương trình bậc 2', subject: 'Toán học',   score: 76, total: 100, date: '18/08', grade: 'B' },
@@ -70,14 +62,8 @@ const GRADE_COLOR = {
   'F':  { bg: 'rgba(239,68,68,0.1)',     fg: '#f87171' },
 };
 
-function StatusBadge({ status }) {
-  const MAP = {
-    open:     { cls: 'open',     label: 'Đang mở' },
-    upcoming: { cls: 'upcoming', label: 'Sắp diễn ra' },
-    done:     { cls: 'done',     label: 'Đã làm' },
-    missed:   { cls: 'missed',   label: 'Đã hết hạn' },
-  };
-  const s = MAP[status] || MAP.done;
+function StatusBadge({ availability }) {
+  const s = AVAILABILITY[availability] || AVAILABILITY.SUBMITTED;
   return <span className={`sd-badge ${s.cls}`}>{s.label}</span>;
 }
 
@@ -87,12 +73,38 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState('exams');
 
+  const [exams, setExams] = useState([]);
+  const [examsLoading, setExamsLoading] = useState(true);
+  const [examsError, setExamsError] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    getExams()
+      .then((data) => {
+        if (alive) setExams(data || []);
+      })
+      .catch((err) => {
+        if (alive) setExamsError(err.message);
+      })
+      .finally(() => {
+        if (alive) setExamsLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const handleLogout = () => { logout(); navigate('/login', { replace: true }); };
+
+  /** Vào phòng thi. Server lo phần "vào mới" hay "vào lại phiên đang dở". */
+  const enterExam = (examId) => navigate(`/student/exams/${examId}/room`);
 
   const userName = currentUser?.fullName || currentUser?.email || 'Học sinh';
   const initials = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
-  const openExams = MOCK_EXAMS.filter(e => e.status === 'open').length;
+  const openExams = exams.filter(
+    e => e.availability === 'OPEN' || e.availability === 'IN_PROGRESS'
+  ).length;
   const avgScore  = Math.round(MOCK_RESULTS.reduce((a, b) => a + b.score, 0) / MOCK_RESULTS.length);
 
   const stats = [
@@ -202,40 +214,72 @@ export default function StudentDashboard() {
               <div className="sd-card" style={{ marginBottom: 20 }}>
                 <div className="sd-card-header">
                   <h2>📋 Đề thi cần làm</h2>
-                  <span style={{ fontSize: 12, color: '#64748b' }}>{MOCK_EXAMS.length} đề thi</span>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>
+                    {examsLoading ? 'đang tải…' : `${exams.length} đề thi`}
+                  </span>
                 </div>
                 <div className="sd-exam-list">
-                  {MOCK_EXAMS.map(exam => (
-                    <div key={exam.id} className="sd-exam-card">
-                      <div className="sd-exam-icon-wrap" style={{ background: exam.iconBg }}>
-                        {exam.icon}
+                  {examsLoading && (
+                    <div style={{ padding: '26px 22px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#64748b' }}>
+                      <Loader2 size={15} className="sd-spin" /> Đang tải danh sách đề thi…
+                    </div>
+                  )}
+
+                  {!examsLoading && examsError && (
+                    <div style={{ padding: '26px 22px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#f87171' }}>
+                      <AlertCircle size={15} /> {examsError}
+                    </div>
+                  )}
+
+                  {!examsLoading && !examsError && exams.length === 0 && (
+                    <div style={{ padding: '26px 22px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#64748b' }}>
+                      <CheckCircle size={15} /> Chưa có đề thi nào dành cho bạn.
+                    </div>
+                  )}
+
+                  {exams.map(exam => {
+                    const av = AVAILABILITY[exam.availability] || AVAILABILITY.SUBMITTED;
+                    const look = SUBJECT_ICON[exam.subjectName] || DEFAULT_ICON;
+                    return (
+                    <div key={exam.examId} className="sd-exam-card">
+                      <div className="sd-exam-icon-wrap" style={{ background: look.bg }}>
+                        {look.icon}
                       </div>
                       <div className="sd-exam-body">
-                        <p className="sd-exam-name">{exam.name}</p>
+                        <p className="sd-exam-name">{exam.title}</p>
                         <div className="sd-exam-meta">
-                          <span><BookOpen size={11} />{exam.subject}</span>
-                          <span><Clock size={11} />{exam.duration} phút</span>
-                          <span style={{ color: '#475569' }}>{exam.questions} câu</span>
-                          <span style={{ color: '#475569' }}>GV: {exam.teacher}</span>
+                          <span><BookOpen size={11} />{exam.subjectName || 'Chưa gán môn'}</span>
+                          <span><Clock size={11} />{exam.durationMinutes} phút</span>
+                          <span style={{ color: '#475569' }}>{exam.totalQuestions} câu</span>
+                          {exam.teacherName && <span style={{ color: '#475569' }}>GV: {exam.teacherName}</span>}
+                          {exam.className && <span style={{ color: '#475569' }}>{exam.className}</span>}
                         </div>
                         <div style={{ marginTop: 8 }}>
-                          <StatusBadge status={exam.status} />
-                          <span style={{ fontSize: 11.5, color: '#475569', marginLeft: 10 }}>Hạn: {exam.deadline}</span>
+                          <StatusBadge availability={exam.availability} />
+                          <span style={{ fontSize: 11.5, color: '#475569', marginLeft: 10 }}>
+                            Hạn: {formatDeadline(exam.endTime)}
+                          </span>
+                          {exam.availability === 'SUBMITTED' && exam.totalScore != null && (
+                            <span style={{ fontSize: 11.5, color: '#34d399', marginLeft: 10, fontWeight: 700 }}>
+                              <Star size={10} style={{ verticalAlign: -1 }} /> {exam.totalScore} điểm
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="sd-exam-action">
-                        {exam.status === 'open' ? (
-                          <button className="sd-btn-primary">
-                            <Play size={13} /> Làm bài
+                        {av.enter ? (
+                          <button className="sd-btn-primary" onClick={() => enterExam(exam.examId)}>
+                            <Play size={13} /> {av.action}
                           </button>
                         ) : (
-                          <button className="sd-btn-ghost">
-                            <Clock size={13} /> Xem trước
+                          <button className="sd-btn-ghost" disabled>
+                            <Clock size={13} /> {av.action}
                           </button>
                         )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

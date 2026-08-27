@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/RegisterPage.jsx'
 import CallbackPage from './pages/auth/CallbackPage.jsx'
 import TeacherDashboard from './pages/teacher/ExamManager.jsx'
 import StudentDashboard from './pages/student/ExamList.jsx'
+import ExamRoom from './pages/student/ExamRoom.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')).render(
           <Route path="/auth/callback" element={<CallbackPage />} />
           {/* Teacher routes */}
           <Route path="/teacher/*" element={<TeacherDashboard />} />
-          {/* Student routes */}
+          {/* Student routes. Phòng thi phải đứng trước /student/* để không bị
+              dashboard bắt mất route. */}
+          <Route path="/student/exams/:examId/room" element={<ExamRoom />} />
           <Route path="/student/*" element={<StudentDashboard />} />
           {/* Render App for all other routes for now */}
           <Route path="/*" element={<App />} />

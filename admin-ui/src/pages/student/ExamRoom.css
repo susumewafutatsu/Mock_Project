@@ -1,0 +1,523 @@
+/* ============ EXAM ROOM ============ */
+/* Cùng bảng màu với StudentDashboard.css để hai trang không lệch tông. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+.er-root {
+  min-height: 100vh;
+  background: #0d1117;
+  font-family: 'Inter', sans-serif;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Thanh trên: đề, đồng hồ, nút nộp ─── */
+.er-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 24px;
+  background: #13161e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.er-topbar-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.er-topbar-title h1 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.er-topbar-title p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ─── Đồng hồ ─── */
+.er-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 11px;
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+/* Dưới 5 phút: đổi sang đỏ và nhấp nháy nhẹ. */
+.er-clock.critical {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+  animation: er-pulse 1s ease-in-out infinite;
+}
+
+.er-clock.expired {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.45);
+  animation: none;
+}
+
+@keyframes er-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Chỉ báo autosave / kết nối */
+.er-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  min-width: 118px;
+}
+
+.er-status.saving { color: #60a5fa; }
+.er-status.saved { color: #34d399; }
+.er-status.failed { color: #f87171; }
+
+/* ─── Nút ─── */
+.er-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.15s, background 0.15s;
+}
+
+.er-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.er-btn-primary {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #06261b;
+}
+
+.er-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+.er-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #d1d5db;
+}
+
+.er-btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+
+/* ─── Dải cảnh báo ─── */
+.er-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 24px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.er-banner.warn {
+  background: rgba(251, 191, 36, 0.1);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.22);
+  color: #fbbf24;
+}
+
+.er-banner.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.22);
+  color: #f87171;
+}
+
+/* ─── Bố cục: câu hỏi | bảng điều hướng ─── */
+.er-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 268px;
+  gap: 20px;
+  padding: 22px 24px 40px;
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .er-body { grid-template-columns: minmax(0, 1fr); }
+  .er-nav-panel { order: -1; position: static; }
+}
+
+.er-card {
+  background: #13161e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+/* ─── Câu hỏi ─── */
+.er-question-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 22px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.er-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.er-question-content {
+  padding: 12px 22px 6px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: #f1f5f9;
+  white-space: pre-wrap;
+}
+
+/* ─── Lựa chọn trắc nghiệm ─── */
+.er-options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 22px 20px;
+}
+
+.er-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #d1d5db;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.er-option:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(96, 165, 250, 0.05);
+}
+
+.er-option.selected {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.08);
+  color: #f1f5f9;
+}
+
+.er-option:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.er-option-key {
+  flex-shrink: 0;
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+}
+
+.er-option.selected .er-option-key {
+  background: #34d399;
+  color: #06261b;
+}
+
+/* ─── Câu tự luận ─── */
+.er-essay {
+  margin: 14px 22px 20px;
+  width: calc(100% - 44px);
+  min-height: 190px;
+  padding: 14px 15px;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.er-essay:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.er-essay:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── Chuyển câu ─── */
+.er-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Bảng điều hướng câu hỏi ─── */
+.er-nav-panel {
+  position: sticky;
+  top: 88px;
+  padding: 16px 18px 18px;
+}
+
+.er-nav-panel h3 {
+  margin: 0 0 3px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.er-nav-panel .er-nav-sub {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.er-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 7px;
+}
+
+.er-nav-cell {
+  aspect-ratio: 1;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #6b7280;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+
+.er-nav-cell:hover { border-color: rgba(96, 165, 250, 0.4); color: #d1d5db; }
+
+/* Đã trả lời và đã lưu được lên server */
+.er-nav-cell.answered {
+  background: rgba(52, 211, 153, 0.14);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #34d399;
+}
+
+/* Đã chọn nhưng autosave đang lỗi — chưa chắc chắn nằm trên server */
+.er-nav-cell.pending {
+  background: rgba(251, 191, 36, 0.14);
+  border-color: rgba(251, 191, 36, 0.32);
+  color: #fbbf24;
+}
+
+.er-nav-cell.current {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+  color: #f1f5f9;
+}
+
+.er-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.er-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.er-legend i {
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ─── Tóm tắt tiến độ ─── */
+.er-progress {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.er-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.er-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.er-progress-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #34d399, #10b981);
+  transition: width 0.25s ease;
+}
+
+/* ─── Trạng thái toàn trang: đang tải / lỗi / đã nộp ─── */
+.er-center {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 60px 24px;
+}
+
+.er-center-box {
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  padding: 34px 28px;
+  background: #13161e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.er-center-box .er-center-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 16px;
+  border-radius: 15px;
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+}
+
+.er-center-box.done .er-center-icon {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+}
+
+.er-center-box.bad .er-center-icon {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.er-center-box h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.er-center-box p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.er-center-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.er-spin { animation: er-spin 0.9s linear infinite; }
+
+@keyframes er-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Hộp xác nhận nộp bài ─── */
+.er-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 6, 12, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.er-modal {
+  max-width: 420px;
+  width: 100%;
+  padding: 24px;
+  background: #13161e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.er-modal h3 {
+  margin: 0 0 10px;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.er-modal p {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.er-modal .er-modal-warn {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+.er-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}

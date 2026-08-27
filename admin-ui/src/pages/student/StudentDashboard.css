@@ -304,3 +304,10 @@
   .sd-main { margin-left: 0; }
   .sd-stats-row { grid-template-columns: 1fr; }
 }
+
+/* Icon xoay lúc đang tải danh sách đề */
+.sd-spin { animation: sd-spin 0.9s linear infinite; }
+
+@keyframes sd-spin {
+  to { transform: rotate(360deg); }
+}
