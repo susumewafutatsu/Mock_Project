@@ -62,9 +62,22 @@ api.interceptors.response.use(
       }
     }
 
-    // Backend trả về ApiResponse { success, message, data, error }
-    const message = response?.data?.error || response?.data?.message || error.message;
-    return Promise.reject(new Error(message));
+    // Backend trả về ApiResponse { success, message, data, error } cho lỗi có
+    // handler riêng, còn lỗi do @ResponseStatus thì rơi vào body mặc định của
+    // Spring { status, error: "Conflict", message, path } — ở đó `error` chỉ là
+    // tên HTTP status nên phải ưu tiên `message`.
+    const body = response?.data;
+    const message =
+      (body?.success === false ? body?.error : null) ||
+      body?.message ||
+      body?.error ||
+      error.message;
+
+    // Giữ lại status: phòng thi cần phân biệt 409 (hết giờ / đã nộp) với 404.
+    const wrapped = new Error(message);
+    wrapped.status = response?.status;
+    wrapped.body = body;
+    return Promise.reject(wrapped);
   }
 );
 

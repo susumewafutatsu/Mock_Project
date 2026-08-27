@@ -1,0 +1,22 @@
+# Dependencies (không bao giờ commit — mỗi người tự npm install)
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Secrets & local config
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

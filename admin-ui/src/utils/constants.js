@@ -7,11 +7,21 @@ export const ROLES = {
   STUDENT: 'STUDENT',
 };
 
+// Phải khớp enum QuestionType ở backend (MULTIPLE_CHOICE | ESSAY | MATCHING)
 export const QUESTION_TYPES = {
   MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
-  TRUE_FALSE: 'TRUE_FALSE',
-  SHORT_ANSWER: 'SHORT_ANSWER',
+  ESSAY: 'ESSAY',
+  MATCHING: 'MATCHING',
 };
+
+export const QUESTION_TYPE_LABELS = {
+  MULTIPLE_CHOICE: 'Trắc nghiệm',
+  ESSAY: 'Tự luận',
+  MATCHING: 'Nối đáp án',
+};
+
+// Câu tự luận không có đáp án chấm tự động — form ẩn phần đáp án
+export const TYPES_WITHOUT_ANSWERS = [QUESTION_TYPES.ESSAY];
 
 export const DIFFICULTY_LABELS = {
   1: 'Rất dễ',
