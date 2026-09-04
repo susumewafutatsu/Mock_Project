@@ -67,11 +67,19 @@ api.interceptors.response.use(
     // Spring { status, error: "Conflict", message, path } — ở đó `error` chỉ là
     // tên HTTP status nên phải ưu tiên `message`.
     const body = response?.data;
-    const message =
+    let message =
       (body?.success === false ? body?.error : null) ||
       body?.message ||
       body?.error ||
       error.message;
+
+    // 403 = token hợp lệ nhưng sai vai trò (thường do tab khác đăng nhập tài
+    // khoản khác, localStorage dùng chung). Body mặc định của Spring chỉ có chữ
+    // "Forbidden" nên phải nói rõ cho người dùng biết phải làm gì.
+    if (response?.status === 403 && (!message || /^forbidden$/i.test(message))) {
+      message = 'Tài khoản đang đăng nhập không có quyền dùng chức năng này. '
+        + 'Hãy đăng xuất và đăng nhập lại bằng đúng tài khoản.';
+    }
 
     // Giữ lại status: phòng thi cần phân biệt 409 (hết giờ / đã nộp) với 404.
     const wrapped = new Error(message);

@@ -7,15 +7,6 @@
 //    gọi lại là "vào lại phòng", không phải "thi lại"), và mọi response mang
 //    remainingSeconds đều được dùng để chỉnh lại đồng hồ (useExamTimer.sync).
 //
-// 2. Mỗi lần học sinh chọn đáp án là một lần autosave ngay. Không đợi bấm nộp.
-//    State cục bộ cập nhật trước cho mượt tay, rồi PUT /answers; nếu PUT lỗi thì
-//    câu đó chuyển sang màu vàng (pending) — đã chọn trên máy nhưng chưa chắc có
-//    trên server. Lúc nộp bài, đúng những câu đang pending được gửi kèm.
-//
-// 3. Heartbeat 20 giây để server biết học sinh còn kết nối. Nó KHÔNG xin thêm
-//    giờ. Đây cũng là đường phát hiện auto-submit sớm nhất: response trả
-//    autoSubmitted = true là bài đã bị server chốt vì hết giờ.
-//
 // 4. 409 nghĩa là phiên không còn mở nữa (hết giờ đã nộp tự động, hoặc đã nộp
 //    trước đó). Gặp 409 ở bất kỳ request nào thì dừng đồng hồ, dừng heartbeat,
 //    và hiện đúng câu thông báo của server chứ không tự bịa lý do.
@@ -514,9 +505,8 @@ export default function ExamRoom() {
         </span>
 
         <span
-          className={`er-clock ${
-            timer.isExpired ? 'expired' : timer.isCritical ? 'critical' : ''
-          }`}
+          className={`er-clock ${timer.isExpired ? 'expired' : timer.isCritical ? 'critical' : ''
+            }`}
         >
           <Clock size={17} />
           {timer.formattedTime}
@@ -639,9 +629,8 @@ export default function ExamRoom() {
                 <button
                   key={q.questionId}
                   type="button"
-                  className={`er-nav-cell ${
-                    pending ? 'pending' : answered ? 'answered' : ''
-                  } ${i === index ? 'current' : ''}`}
+                  className={`er-nav-cell ${pending ? 'pending' : answered ? 'answered' : ''
+                    } ${i === index ? 'current' : ''}`}
                   onClick={() => setIndex(i)}
                   title={`Câu ${i + 1}`}
                 >

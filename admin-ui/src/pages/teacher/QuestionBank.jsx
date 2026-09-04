@@ -6,10 +6,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Search, Edit3, Trash2, BookOpen, AlertCircle, Lock,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
 import QuestionForm from '../../components/question/QuestionForm';
 import * as questionService from '../../services/questionService';
+import classService from '../../services/classService';
 import {
   DIFFICULTY_LABELS,
   QUESTION_TYPES,
@@ -18,6 +19,118 @@ import {
 import { truncate } from '../../utils/helpers';
 
 const PAGE_SIZE = 20;
+
+/**
+ * Form tạo ngân hàng mới. Bắt buộc chọn trình độ: ngân hàng không có trình độ
+ * thì lúc tạo đề thi không thể tự chọn đúng ngân hàng theo trình độ của đề,
+ * giáo viên phải mò tay giữa các ngân hàng.
+ * Danh sách trình độ lấy từ GET /api/teacher/levels (dữ liệu seed dùng chung).
+ */
+function NewBankModal({ onClose, onCreate, creating }) {
+  const [title, setTitle] = useState('');
+  const [levelId, setLevelId] = useState('');
+  const [levels, setLevels] = useState([]);
+  const [loadingLevels, setLoadingLevels] = useState(true);
+  const [formError, setFormError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    classService
+      .getLevels()
+      .then((list) => {
+        if (cancelled) return;
+        setLevels(list);
+        setLevelId((current) => current || String(list[0]?.levelId ?? ''));
+      })
+      .catch((err) => !cancelled && setFormError(err.message))
+      .finally(() => !cancelled && setLoadingLevels(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      setFormError('Nhập tên ngân hàng câu hỏi.');
+      return;
+    }
+    if (!levelId) {
+      setFormError('Chọn trình độ cho ngân hàng.');
+      return;
+    }
+    setFormError(null);
+    onCreate({ title: title.trim(), levelId: Number(levelId) });
+  };
+
+  return (
+    <div className="td-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="td-modal" style={{ maxWidth: 520 }}>
+        <div className="td-modal-header">
+          <div>
+            <h2>📚 Ngân hàng câu hỏi mới</h2>
+            <p>Gom câu hỏi theo trình độ để lúc tạo đề chọn nhanh hơn</p>
+          </div>
+          <button className="td-close-btn" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="td-modal-body">
+            <div className="td-form-group full">
+              <label className="td-form-label">
+                <BookOpen size={14} /> Tên ngân hàng <span className="required">*</span>
+              </label>
+              <input
+                className="td-form-input"
+                placeholder="VD: N4 – Ngữ pháp cơ bản"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={200}
+                autoFocus
+              />
+            </div>
+
+            <div className="td-form-group full">
+              <label className="td-form-label">
+                <BookOpen size={14} /> Trình độ <span className="required">*</span>
+              </label>
+              <select
+                className="td-form-select"
+                value={levelId}
+                onChange={(e) => setLevelId(e.target.value)}
+                disabled={loadingLevels || levels.length === 0}
+              >
+                {loadingLevels && <option value="">Đang tải...</option>}
+                {!loadingLevels && levels.length === 0 && (
+                  <option value="">Chưa có trình độ nào</option>
+                )}
+                {levels.map((lv) => (
+                  <option key={lv.levelId} value={lv.levelId}>
+                    {lv.subjectName ? `${lv.subjectName} – ` : ''}{lv.levelName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {formError && (
+              <div
+                className="td-form-group full"
+                style={{ color: '#f87171', fontSize: 13, display: 'flex', gap: 6 }}
+              >
+                <AlertCircle size={15} style={{ flexShrink: 0 }} /> {formError}
+              </div>
+            )}
+          </div>
+
+          <div className="td-modal-footer">
+            <button type="button" className="td-btn-secondary" onClick={onClose}>Hủy</button>
+            <button type="submit" className="td-btn-primary" disabled={creating}>
+              {creating ? 'Đang tạo...' : 'Tạo ngân hàng'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const QuestionBank = () => {
   const [banks, setBanks] = useState([]);
@@ -30,6 +143,8 @@ const QuestionBank = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const [editing, setEditing] = useState(null);   // { ...question } | 'new' | null
+  const [showNewBank, setShowNewBank] = useState(false);
+  const [creatingBank, setCreatingBank] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
@@ -123,16 +238,18 @@ const QuestionBank = () => {
     }
   };
 
-  const handleCreateBank = async () => {
-    const title = window.prompt('Tên ngân hàng câu hỏi mới:');
-    if (!title?.trim()) return;
+  const handleCreateBank = async ({ title, levelId }) => {
+    setCreatingBank(true);
     try {
-      const created = await questionService.createBank({ title: title.trim() });
+      const created = await questionService.createBank({ title, levelId });
       setBanks((prev) => [...prev, created]);
       setBankId(created.bankId);
       setPage(0);
+      setShowNewBank(false);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setCreatingBank(false);
     }
   };
 
@@ -166,11 +283,11 @@ const QuestionBank = () => {
               {banks.length === 0 && <option value="">-- Chưa có ngân hàng --</option>}
               {banks.map((b) => (
                 <option key={b.bankId} value={b.bankId}>
-                  {b.title} ({b.totalQuestions} câu)
+                  {b.title} ({b.totalQuestions} câu){b.levelName ? ` · ${b.levelName}` : ''}
                 </option>
               ))}
             </select>
-            <button className="td-btn-secondary" onClick={handleCreateBank}>
+            <button className="td-btn-secondary" onClick={() => setShowNewBank(true)}>
               <Plus size={15} /> Ngân hàng mới
             </button>
             <button
@@ -346,6 +463,14 @@ const QuestionBank = () => {
           </>
         )}
       </div>
+
+      {showNewBank && (
+        <NewBankModal
+          onClose={() => setShowNewBank(false)}
+          onCreate={handleCreateBank}
+          creating={creatingBank}
+        />
+      )}
 
       {editing && (
         <QuestionForm

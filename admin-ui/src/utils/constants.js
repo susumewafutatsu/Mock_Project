@@ -35,8 +35,10 @@ export const ROUTES = {
   LOGIN: '/login',
   AUTH_CALLBACK: '/auth/callback',
   ADMIN_DASHBOARD: '/admin/dashboard',
+  TEACHER_DASHBOARD: '/teacher/exams',
   TEACHER_QUESTIONS: '/teacher/questions',
   TEACHER_EXAMS: '/teacher/exams',
+  TEACHER_CLASSES: '/teacher/classes',
   TEACHER_AI: '/teacher/ai-generate',
   STUDENT_EXAMS: '/student/exams',
   STUDENT_RESULTS: '/student/results',
@@ -52,6 +54,6 @@ export const STORAGE_KEYS = {
 // Trang mặc định sau khi đăng nhập, theo role
 export const HOME_BY_ROLE = {
   [ROLES.ADMIN]: ROUTES.ADMIN_DASHBOARD,
-  [ROLES.TEACHER]: ROUTES.TEACHER_QUESTIONS,
+  [ROLES.TEACHER]: ROUTES.TEACHER_EXAMS,
   [ROLES.STUDENT]: ROUTES.STUDENT_EXAMS,
 };
