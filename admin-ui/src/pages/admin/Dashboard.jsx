@@ -2,7 +2,6 @@
 // TODO: Admin overview dashboard
 // - Total users, total exams, total questions (StatCards)
 // - Recent submissions table
-// - Wrap / integrate admin-so-diem-chung.jsx logic here
 
 const Dashboard = () => {
   // TODO: useEffect → fetch analyticsService.getAdminStats()

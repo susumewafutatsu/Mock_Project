@@ -311,3 +311,207 @@
 @keyframes sd-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CHỌN ĐỀ: lọc theo trình độ, phân trang, mở đề của một lớp
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Trạng thái chung của một danh sách ───
+   Bốn trạng thái (đang tải / lỗi / rỗng / có dữ liệu) dùng chung một khối,
+   để ba màn hình không trôi dần thành ba kiểu hiển thị khác nhau. */
+.sd-list-state {
+  padding: 26px 22px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: #64748b;
+}
+
+.sd-list-state.error { color: #f87171; }
+
+/* ─── Bộ lọc trình độ ─── */
+.sd-filter-bar {
+  padding: 16px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sd-filter-label {
+  margin: 0 0 11px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: #475569;
+}
+
+.sd-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.sd-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #94a3b8; font-size: 12.5px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sd-chip:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+
+.sd-chip.active {
+  background: rgba(52,211,153,0.13);
+  border-color: rgba(52,211,153,0.45);
+  color: #34d399;
+}
+
+.sd-chip:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+/* Số đề của trình độ đó — để không ai bấm vào một bộ lọc rồi nhận về danh sách rỗng */
+.sd-chip-count {
+  font-size: 11px; font-weight: 700;
+  padding: 1px 7px; border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  color: inherit; opacity: 0.85;
+}
+
+/* Chấm đánh dấu "trình độ bạn đang học" */
+.sd-chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #fbbf24; flex-shrink: 0;
+}
+
+.sd-filter-note {
+  margin: 12px 0 0;
+  font-size: 12.5px; color: #64748b;
+}
+
+.sd-link-btn {
+  background: none; border: none; padding: 0;
+  color: #34d399; font-size: inherit; font-weight: 600;
+  font-family: inherit; cursor: pointer; text-decoration: underline;
+}
+
+.sd-link-btn:hover { filter: brightness(1.15); }
+
+.sd-link-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+
+/* ─── Phân trang ─── */
+.sd-pager {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  padding: 14px 22px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.sd-pager-info { font-size: 12.5px; color: #64748b; }
+
+.sd-pager-controls { display: flex; align-items: center; gap: 5px; }
+
+.sd-pager-btn {
+  min-width: 32px; height: 32px; padding: 0 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #94a3b8; font-size: 12.5px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: all 0.15s;
+}
+
+.sd-pager-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+
+.sd-pager-btn.active {
+  background: rgba(52,211,153,0.15);
+  border-color: rgba(52,211,153,0.45);
+  color: #34d399;
+}
+
+.sd-pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.sd-pager-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+
+.sd-pager-gap { color: #475569; font-size: 12.5px; padding: 0 2px; }
+
+/* ─── Thẻ lớp học bấm được ───
+   Thẻ lớp giờ là nút mở tới đề của lớp, nên phải reset lại kiểu mặc định của
+   <button> (căn giữa, font hệ thống) chứ không chỉ đổi con trỏ chuột. */
+.sd-class-card {
+  padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  text-align: left; font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sd-class-card:hover {
+  border-color: rgba(52,211,153,0.35);
+  transform: translateY(-2px);
+}
+
+.sd-class-card:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+
+.sd-class-card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.sd-class-card-cta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12.5px; font-weight: 700; color: #34d399;
+}
+
+/* ─── Trang đề của một lớp ─── */
+.sd-back-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: none; border: none; padding: 0;
+  margin-bottom: 16px;
+  color: #64748b; font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+}
+
+.sd-back-btn:hover { color: #34d399; }
+
+.sd-back-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 3px; border-radius: 4px; }
+
+.sd-class-hero {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sd-class-hero-icon {
+  width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+  background: rgba(52,211,153,0.12);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.sd-class-hero-name {
+  margin: 0 0 7px; font-size: 19px; font-weight: 700; color: #f1f5f9;
+}
+
+.sd-class-hero-tags { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+/* ─── Nhãn môn học / trình độ ───
+   Trước đây viết inline ở ba chỗ với ba bộ giá trị hơi khác nhau. */
+.sd-tag {
+  font-size: 11.5px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px;
+}
+
+.sd-tag.subject { background: rgba(96,165,250,0.1); color: #60a5fa; }
+.sd-tag.level   { background: rgba(52,211,153,0.1); color: #34d399; }
+
+/* Huy hiệu "N đề cần làm" cạnh tên lớp ở trang chủ */
+.sd-count-pill {
+  display: inline-block; margin-left: 9px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 9px; border-radius: 999px;
+  background: rgba(52,211,153,0.14); color: #34d399;
+  vertical-align: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-chip, .sd-pager-btn, .sd-class-card, .sd-exam-card { transition: none; }
+  .sd-class-card:hover, .sd-exam-card:hover { transform: none; }
+  .sd-spin { animation: none; }
+}

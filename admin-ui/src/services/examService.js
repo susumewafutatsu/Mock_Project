@@ -11,14 +11,69 @@
 
 import api from './api';
 
-// ── Danh sách đề ─────────────────────────────────────────────────────
+// ── Tìm đề ───────────────────────────────────────────────────────────
+//
+// Ba lối vào cho ba màn hình, không phải một danh sách dùng chung. Học sinh gặp
+// đề thi theo hai đường khác hẳn nhau — bài giáo viên giao trong lớp, và đề tự
+// do em tự chọn để ôn — nên back-end trả về hai thứ riêng biệt, mỗi thứ có
+// trường `source` nói rõ nó là loại nào.
+//
+// Mọi ExamResponse đều mang sẵn `availability` do server tính; client không bao
+// giờ tự so startTime/endTime với đồng hồ máy học sinh.
 
 /**
- * Đề học sinh được làm, kèm trạng thái từng đề → ExamResponse[]
- * availability: UPCOMING | OPEN | IN_PROGRESS | SUBMITTED | CLOSED | NO_QUESTIONS
+ * Trang chủ: đề đã nhóm sẵn theo lớp, cộng vài đề luyện tập gợi ý.
+ * @returns StudentExamBoardResponse
+ *   { classes: ClassExamGroup[], practice: ExamResponse[], pendingCount,
+ *     practiceTruncated, serverTime }
+ *   ClassExamGroup = { classId, className, subjectName, levelName, teacherName,
+ *                      pendingCount, exams: ExamResponse[] }
  */
-export async function getExams() {
+export async function getExamBoard() {
   const { data } = await api.get('/student/exams');
+  return data.data;
+}
+
+/**
+ * Toàn bộ đề của MỘT lớp — không phân trang vì một lớp hiếm khi có nhiều đề.
+ * Ném 404 nếu học sinh không học lớp đó.
+ * @returns ExamResponse[]
+ */
+export async function getClassExams(classId) {
+  const { data } = await api.get(`/student/classes/${classId}/exams`);
+  return data.data;
+}
+
+/**
+ * Một trang đề luyện tập tự do, kèm bộ lọc trình độ.
+ *
+ * Không truyền levelId/subjectId thì server tự chọn một trình độ theo lớp học
+ * sinh đang học và bật `filteredByEnrolledLevels` — client phải hiện lối thoát
+ * "xem tất cả trình độ", nếu không học sinh sẽ tưởng đây là toàn bộ đề.
+ *
+ * @param params { levelId?, subjectId?, page = 0, size = 12 } — page đếm từ 0
+ * @returns PracticeExamsResponse
+ *   { levels: PracticeLevelOption[], appliedLevelId, appliedSubjectId,
+ *     filteredByEnrolledLevels, exams, page, size, totalElements, totalPages }
+ *   PracticeLevelOption = { levelId, levelName, subjectName, examCount, enrolled }
+ */
+export async function getPracticeExams({
+  levelId = null,
+  subjectId = null,
+  allLevels = false,
+  page = 0,
+  size = 12,
+} = {}) {
+  const params = { page, size };
+  // Bỏ hẳn key khi không lọc, thay vì gửi levelId=null — chuỗi "null" trên URL
+  // sẽ khiến Spring cố ép kiểu và trả 400.
+  if (levelId != null) params.levelId = levelId;
+  if (subjectId != null) params.subjectId = subjectId;
+  // Phải nói rõ "tôi muốn xem tất cả", vì không gửi bộ lọc mang nghĩa khác:
+  // đó là lúc vừa mở trang và để server chọn hộ một trình độ.
+  if (allLevels) params.allLevels = true;
+
+  const { data } = await api.get('/student/practice-exams', { params });
   return data.data;
 }
 
