@@ -1,5 +1,5 @@
 // src/pages/teacher/QuestionBank.jsx
-// Trang quản lý ngân hàng câu hỏi của giáo viên.
+// Trang quản lý ngân hàng câu hỏi của người ra đề.
 // Render bên trong khung TeacherDashboard nên chỉ trả về phần nội dung,
 // dùng lại lớp CSS td-* thay vì tự định nghĩa style mới.
 
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import QuestionForm from '../../components/question/QuestionForm';
 import * as questionService from '../../services/questionService';
-import classService from '../../services/classService';
+import roomService from '../../services/roomService';
 import {
   DIFFICULTY_LABELS,
   QUESTION_TYPES,
@@ -23,7 +23,7 @@ const PAGE_SIZE = 20;
 /**
  * Form tạo ngân hàng mới. Bắt buộc chọn trình độ: ngân hàng không có trình độ
  * thì lúc tạo đề thi không thể tự chọn đúng ngân hàng theo trình độ của đề,
- * giáo viên phải mò tay giữa các ngân hàng.
+ * người ra đề phải mò tay giữa các ngân hàng.
  * Danh sách trình độ lấy từ GET /api/teacher/levels (dữ liệu seed dùng chung).
  */
 function NewBankModal({ onClose, onCreate, creating }) {
@@ -35,7 +35,7 @@ function NewBankModal({ onClose, onCreate, creating }) {
 
   useEffect(() => {
     let cancelled = false;
-    classService
+    roomService
       .getLevels()
       .then((list) => {
         if (cancelled) return;
@@ -113,7 +113,7 @@ function NewBankModal({ onClose, onCreate, creating }) {
             {formError && (
               <div
                 className="td-form-group full"
-                style={{ color: '#f87171', fontSize: 13, display: 'flex', gap: 6 }}
+                style={{ color: 'var(--cinnabar)', fontSize: 13, display: 'flex', gap: 6 }}
               >
                 <AlertCircle size={15} style={{ flexShrink: 0 }} /> {formError}
               </div>
@@ -261,8 +261,8 @@ const QuestionBank = () => {
         <div
           style={{
             display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20,
-            background: 'rgba(239,68,68,0.1)', color: '#f87171',
-            border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10,
+            background: 'rgba(185, 58, 43,0.1)', color: 'var(--cinnabar)',
+            border: '1px solid rgba(185, 58, 43,0.25)', borderRadius: 10,
             padding: '12px 14px', fontSize: 13.5,
           }}
         >
@@ -304,7 +304,7 @@ const QuestionBank = () => {
         <div
           style={{
             display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-            padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+            padding: '16px 20px', borderBottom: '1px solid rgba(43, 38, 32, 0.10)',
           }}
         >
           <div className="td-search-box" style={{ flex: 1, minWidth: 220 }}>
@@ -315,7 +315,7 @@ const QuestionBank = () => {
               placeholder="Tìm trong nội dung câu hỏi..."
               style={{
                 background: 'transparent', border: 'none', outline: 'none',
-                color: '#e2e8f0', fontSize: 13.5, width: '100%',
+                color: 'var(--ink-body)', fontSize: 13.5, width: '100%',
               }}
             />
           </div>
@@ -383,7 +383,7 @@ const QuestionBank = () => {
               <tbody>
                 {visibleQuestions.map((q, index) => (
                   <tr key={q.questionId}>
-                    <td style={{ color: '#475569', fontSize: 12.5 }}>
+                    <td style={{ color: 'var(--ink-mute)', fontSize: 12.5 }}>
                       {page * PAGE_SIZE + index + 1}
                     </td>
                     <td>
@@ -392,13 +392,13 @@ const QuestionBank = () => {
                         <div className="td-exam-subject">Giải thích: {truncate(q.explanation, 80)}</div>
                       )}
                     </td>
-                    <td style={{ color: '#94a3b8', fontSize: 13 }}>
+                    <td style={{ color: 'var(--ink-mute)', fontSize: 13 }}>
                       {QUESTION_TYPE_LABELS[q.questionType] ?? q.questionType}
                     </td>
-                    <td style={{ color: '#94a3b8', fontSize: 13 }}>
+                    <td style={{ color: 'var(--ink-mute)', fontSize: 13 }}>
                       {q.difficultyLevel} — {DIFFICULTY_LABELS[q.difficultyLevel] ?? '—'}
                     </td>
-                    <td style={{ fontWeight: 600, color: '#a78bfa' }}>
+                    <td style={{ fontWeight: 600, color: 'var(--violet)' }}>
                       {q.answers?.length ?? 0}
                     </td>
                     <td>
@@ -420,7 +420,7 @@ const QuestionBank = () => {
                         </button>
                         <button
                           className="td-btn-ghost"
-                          style={{ color: '#f87171' }}
+                          style={{ color: 'var(--cinnabar)' }}
                           title={q.usedInExam ? 'Ẩn khỏi ngân hàng' : 'Xoá'}
                           onClick={() => handleDelete(q)}
                         >
@@ -436,8 +436,8 @@ const QuestionBank = () => {
             <div
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
-                fontSize: 13, color: '#64748b',
+                padding: '14px 20px', borderTop: '1px solid rgba(43, 38, 32, 0.10)',
+                fontSize: 13, color: 'var(--ink-faint)',
               }}
             >
               <span>

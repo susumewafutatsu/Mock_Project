@@ -1,5 +1,5 @@
 // src/pages/student/ExamRoom.jsx
-// Phòng thi của học sinh.
+// Phòng thi của thí sinh.
 //
 // Bốn quy ước quan trọng của trang này:
 //
@@ -31,6 +31,7 @@ import { useExamTimer } from '../../hooks/useExamTimer';
 import {
   getSession,
   heartbeat,
+  isAttemptsExhaustedError,
   isSessionClosedError,
   saveAnswer,
   startExam,
@@ -110,11 +111,11 @@ export default function ExamRoom() {
    * câu thông báo của server thay vì tự suy diễn lý do.
    */
   const closeSession = useCallback(
-    (message) => {
+    (message, title) => {
       stopBackgroundWork();
       pauseTimer();
       setNotice({
-        title: 'Phiên thi đã kết thúc',
+        title: title || 'Phiên thi đã kết thúc',
         message: message || 'Bài của bạn đã được nộp. Xem điểm ở trang kết quả.',
       });
       setPhase('closed');
@@ -147,7 +148,14 @@ export default function ExamRoom() {
       })
       .catch((err) => {
         if (isSessionClosedError(err)) {
-          closeSession(err.message);
+          // 409 lúc VÀO phòng có hai nghĩa rất khác nhau: bài đã nộp / đề đã
+          // đóng, hoặc thí sinh đã dùng hết số lượt người ra đề cho. Cả hai đều
+          // đóng phòng thi lại, nhưng tiêu đề "Phiên thi đã kết thúc" đặt lên
+          // trường hợp thứ hai thì sai — em ấy chưa hề bắt đầu phiên nào.
+          closeSession(
+            err.message,
+            isAttemptsExhaustedError(err) ? 'Đã hết lượt làm bài' : undefined
+          );
           return;
         }
         setNotice({ title: 'Không vào được phòng thi', message: err.message });
@@ -256,7 +264,7 @@ export default function ExamRoom() {
           closeSession(err.message);
           return;
         }
-        // Lỗi mạng: vẫn ở trong phòng thi để học sinh bấm nộp lại được.
+        // Lỗi mạng: vẫn ở trong phòng thi để thí sinh bấm nộp lại được.
         setNotice({ title: 'Nộp bài không thành công', message: err.message });
       } finally {
         submittingRef.current = false;
@@ -269,7 +277,7 @@ export default function ExamRoom() {
   submitRef.current = doSubmit;
 
   // ── Heartbeat ─────────────────────────────────────────────────────
-  // Chỉ để server biết học sinh còn kết nối; không gia hạn thêm giờ. Đây là
+  // Chỉ để server biết thí sinh còn kết nối; không gia hạn thêm giờ. Đây là
   // đường phát hiện auto-submit sớm nhất vì nó trả 200 kèm cờ, không phải 409.
   useEffect(() => {
     if (phase !== 'active') return undefined;
@@ -300,7 +308,7 @@ export default function ExamRoom() {
   // ── Mất mạng / có mạng lại ────────────────────────────────────────
   // Khi mạng trở lại: đọc phiên từ server để lấy thời gian còn lại thật và đáp
   // án đã lưu, rồi đẩy lại những câu autosave còn dở. Đáp án trên máy được ưu
-  // tiên cho các câu đang pending — đó là thao tác mới nhất của học sinh.
+  // tiên cho các câu đang pending — đó là thao tác mới nhất của thí sinh.
   const restoreFromServer = useCallback(async () => {
     try {
       const data = await getSession(examId);
@@ -350,7 +358,7 @@ export default function ExamRoom() {
   }, []);
 
   // Đóng tab giữa lúc thi thì hỏi lại. Đáp án đã autosave nên không mất, nhưng
-  // đồng hồ vẫn chạy ở server — nhắc để học sinh không bỏ bài vì bấm nhầm.
+  // đồng hồ vẫn chạy ở server — nhắc để thí sinh không bỏ bài vì bấm nhầm.
   useEffect(() => {
     if (phase !== 'active') return undefined;
     const warn = (e) => {
@@ -469,10 +477,22 @@ export default function ExamRoom() {
                 ? ` — điểm: ${result.totalScore}/${result.maxScore}`
                 : ''}
               .
-              {awaiting ? ' Còn câu tự luận chờ giáo viên chấm nên điểm chưa phải điểm cuối.' : ''}
+              {awaiting ? ' Còn câu tự luận chờ người ra đề chấm nên điểm chưa phải điểm cuối.' : ''}
             </p>
             <div className="er-center-actions">
-              <button type="button" className="er-btn er-btn-primary" onClick={goBackToList}>
+              {/* Xem lại bài ngay là hành động đúng nhất ở màn hình này với một
+                  nền tảng ôn thi — vừa làm xong là lúc thí sinh còn nhớ mình đã
+                  phân vân ở câu nào. Nên nó là nút chính, không phải nút phụ. */}
+              {result?.submissionId != null && (
+                <button
+                  type="button"
+                  className="er-btn er-btn-primary"
+                  onClick={() => navigate(`/student/submissions/${result.submissionId}/review`)}
+                >
+                  Xem lại bài làm
+                </button>
+              )}
+              <button type="button" className="er-btn" onClick={goBackToList}>
                 Về danh sách đề
               </button>
             </div>
@@ -490,6 +510,11 @@ export default function ExamRoom() {
           <h1>{session?.examTitle || 'Phòng thi'}</h1>
           <p>
             Câu {index + 1}/{questions.length} · đã làm {answeredCount}/{questions.length}
+            {/* Đề nhiều lượt: nói rõ đang ở lượt nào, để thí sinh biết đây là
+                lần cuối hay còn cơ hội làm lại. Đề không giới hạn thì im lặng. */}
+            {session?.maxAttempts != null && (
+              <> · lượt {session.attemptNumber}/{session.maxAttempts}</>
+            )}
           </p>
         </div>
 
@@ -642,15 +667,15 @@ export default function ExamRoom() {
 
           <div className="er-legend">
             <span>
-              <i style={{ background: 'rgba(52, 211, 153, 0.5)' }} />
+              <i style={{ background: 'rgba(47, 143, 111, 0.5)' }} />
               Đã trả lời và đã lưu
             </span>
             <span>
-              <i style={{ background: 'rgba(251, 191, 36, 0.55)' }} />
+              <i style={{ background: 'rgba(201, 146, 46, 0.55)' }} />
               Đã chọn, chưa lưu được
             </span>
             <span>
-              <i style={{ background: 'rgba(255, 255, 255, 0.12)' }} />
+              <i style={{ background: 'rgba(43, 38, 32, 0.09)' }} />
               Chưa trả lời
             </span>
           </div>

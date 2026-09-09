@@ -1,19 +1,18 @@
 /* ============ STUDENT DASHBOARD ============ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 .sd-root {
   display: flex;
   min-height: 100vh;
-  background: #0d1117;
-  font-family: 'Inter', sans-serif;
-  color: #e2e8f0;
+  background: var(--paper);
+  font-family: var(--sans);
+  color: var(--ink-body);
 }
 
 /* ─── SIDEBAR ─── */
 .sd-sidebar {
   width: 250px;
-  background: #13161e;
-  border-right: 1px solid rgba(255,255,255,0.06);
+  background: var(--paper-raised);
+  border-right: 1px solid rgba(43, 38, 32, 0.10);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -25,23 +24,23 @@
 
 .sd-logo {
   padding: 26px 22px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(43, 38, 32, 0.05);
 }
 
 .sd-logo h2 {
   font-size: 17px; font-weight: 800; margin: 0;
-  background: linear-gradient(135deg, #34d399, #60a5fa);
+  background: linear-gradient(135deg, var(--jade), var(--azure));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.sd-logo p { font-size: 11.5px; color: #64748b; margin: 4px 0 0; }
+.sd-logo p { font-size: 11.5px; color: var(--ink-faint); margin: 4px 0 0; }
 
 .sd-nav { flex: 1; padding: 14px 10px; overflow-y: auto; }
 
 .sd-nav-label {
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
-  text-transform: uppercase; color: #374151;
+  text-transform: uppercase; color: var(--ink-soft);
   padding: 8px 12px 5px; margin-top: 6px;
 }
 
@@ -49,54 +48,54 @@
   display: flex; align-items: center; gap: 11px;
   padding: 10px 13px; border-radius: 10px;
   cursor: pointer; font-size: 13.5px; font-weight: 500;
-  color: #6b7280; border: none; background: none;
+  color: var(--ink-mute); border: none; background: none;
   width: 100%; text-align: left; margin-bottom: 2px;
   transition: all 0.15s; font-family: inherit;
   position: relative;
 }
 
-.sd-nav-item:hover { background: rgba(255,255,255,0.05); color: #d1d5db; }
+.sd-nav-item:hover { background: rgba(43, 38, 32, 0.05); color: var(--ink-soft); }
 
 .sd-nav-item.active {
-  background: rgba(52,211,153,0.1);
-  color: #34d399; font-weight: 600;
+  background: rgba(47, 143, 111,0.1);
+  color: var(--jade); font-weight: 600;
 }
 
 .sd-nav-item.active::before {
   content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
-  width: 3px; border-radius: 0 3px 3px 0; background: #34d399;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--jade);
 }
 
 .sd-nav-badge {
-  margin-left: auto; background: rgba(239,68,68,0.2);
-  color: #fca5a5; font-size: 10.5px; font-weight: 700;
+  margin-left: auto; background: rgba(185, 58, 43,0.2);
+  color: var(--cinnabar-deep); font-size: 10.5px; font-weight: 700;
   padding: 1px 7px; border-radius: 999px;
 }
 
 .sd-footer {
   padding: 14px 10px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(43, 38, 32, 0.05);
 }
 
 .sd-user-card {
   display: flex; align-items: center; gap: 11px;
   padding: 11px 13px; border-radius: 12px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(43, 38, 32, 0.04);
   cursor: pointer; transition: background 0.15s;
 }
 
-.sd-user-card:hover { background: rgba(255,255,255,0.07); }
+.sd-user-card:hover { background: rgba(43, 38, 32, 0.07); }
 
 .sd-avatar {
   width: 36px; height: 36px; border-radius: 10px;
-  background: linear-gradient(135deg, #34d399, #60a5fa);
+  background: linear-gradient(135deg, var(--jade), var(--azure));
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 13px; color: #fff; flex-shrink: 0;
+  font-weight: 800; font-size: 13px; color: var(--on-accent); flex-shrink: 0;
 }
 
 .sd-user-info p { margin: 0; }
-.sd-user-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
-.sd-user-role { font-size: 11px; color: #64748b; margin-top: 1px !important; }
+.sd-user-name { font-size: 13px; font-weight: 600; color: var(--ink-body); }
+.sd-user-role { font-size: 11px; color: var(--ink-faint); margin-top: 1px !important; }
 
 /* ─── MAIN ─── */
 .sd-main {
@@ -109,33 +108,33 @@
 
 .sd-topbar {
   padding: 18px 30px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  background: rgba(13,17,23,0.85);
+  border-bottom: 1px solid rgba(43, 38, 32, 0.05);
+  background: rgba(255, 253, 247, 0.86);
   backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 50;
 }
 
-.sd-topbar-left h1 { font-size: 19px; font-weight: 700; margin: 0; color: #f1f5f9; letter-spacing: -0.3px; }
-.sd-topbar-left p  { font-size: 12.5px; color: #64748b; margin: 3px 0 0; }
+.sd-topbar-left h1 { font-size: 19px; font-weight: 700; margin: 0; color: var(--ink); letter-spacing: -0.3px; }
+.sd-topbar-left p  { font-size: 12.5px; color: var(--ink-faint); margin: 3px 0 0; }
 
 .sd-topbar-right { display: flex; align-items: center; gap: 10px; }
 
 .sd-icon-btn {
   width: 37px; height: 37px; border-radius: 10px;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(43, 38, 32, 0.05); border: 1px solid rgba(43, 38, 32, 0.07);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #94a3b8; transition: all 0.15s;
+  cursor: pointer; color: var(--ink-mute); transition: all 0.15s;
 }
 
-.sd-icon-btn:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+.sd-icon-btn:hover { background: rgba(43, 38, 32, 0.07); color: var(--ink-body); }
 
 .sd-content { padding: 28px 30px; flex: 1; }
 
 /* ─── WELCOME BANNER ─── */
 .sd-welcome-banner {
-  background: linear-gradient(135deg, #13261f 0%, #0f1e2e 100%);
-  border: 1px solid rgba(52,211,153,0.15);
+  background: linear-gradient(135deg, var(--jade-tint) 0%, var(--jade-tint) 100%);
+  border: 1px solid rgba(47, 143, 111,0.15);
   border-radius: 18px; padding: 28px 32px;
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 28px; gap: 20px; overflow: hidden; position: relative;
@@ -144,17 +143,17 @@
 .sd-welcome-banner::before {
   content: ''; position: absolute; right: -40px; top: -40px;
   width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(52,211,153,0.08), transparent 70%);
+  background: radial-gradient(circle, rgba(47, 143, 111,0.08), transparent 70%);
 }
 
 .sd-welcome-title { font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.4px; }
-.sd-welcome-title span { background: linear-gradient(135deg,#34d399,#60a5fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-.sd-welcome-sub { font-size: 13.5px; color: #94a3b8; margin: 0; }
+.sd-welcome-title span { background: linear-gradient(135deg,var(--jade),var(--azure)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.sd-welcome-sub { font-size: 13.5px; color: var(--ink-mute); margin: 0; }
 
 .sd-streak-pill {
-  background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.2);
+  background: rgba(201, 146, 46,0.12); border: 1px solid rgba(201, 146, 46,0.2);
   border-radius: 999px; padding: 7px 16px;
-  font-size: 13px; font-weight: 700; color: #fbbf24;
+  font-size: 13px; font-weight: 700; color: var(--gold);
   display: flex; align-items: center; gap: 7px;
   white-space: nowrap; flex-shrink: 0;
 }
@@ -166,17 +165,17 @@
 }
 
 .sd-stat-card {
-  background: #13161e; border: 1px solid rgba(255,255,255,0.06);
+  background: var(--paper-raised); border: 1px solid rgba(43, 38, 32, 0.10);
   border-radius: 14px; padding: 20px 22px;
   transition: border-color 0.2s, transform 0.2s;
 }
 
-.sd-stat-card:hover { border-color: rgba(52,211,153,0.25); transform: translateY(-2px); }
+.sd-stat-card:hover { border-color: rgba(47, 143, 111,0.25); transform: translateY(-2px); }
 
 .sd-stat-icon { font-size: 24px; margin-bottom: 10px; display: block; }
-.sd-stat-label { font-size: 11.5px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
-.sd-stat-value { font-size: 28px; font-weight: 800; color: #f1f5f9; margin: 6px 0 3px; letter-spacing: -0.8px; }
-.sd-stat-sub   { font-size: 11.5px; color: #64748b; margin: 0; }
+.sd-stat-label { font-size: 11.5px; color: var(--ink-faint); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+.sd-stat-value { font-size: 28px; font-weight: 800; color: var(--ink); margin: 6px 0 3px; letter-spacing: -0.8px; }
+.sd-stat-sub   { font-size: 11.5px; color: var(--ink-faint); margin: 0; }
 
 /* ─── MAIN GRID ─── */
 .sd-main-grid {
@@ -187,28 +186,28 @@
 
 /* ─── SECTION CARD ─── */
 .sd-card {
-  background: #13161e; border: 1px solid rgba(255,255,255,0.06);
+  background: var(--paper-raised); border: 1px solid rgba(43, 38, 32, 0.10);
   border-radius: 16px; overflow: hidden;
 }
 
 .sd-card-header {
-  padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 18px 22px; border-bottom: 1px solid rgba(43, 38, 32, 0.05);
   display: flex; align-items: center; justify-content: space-between;
 }
 
-.sd-card-header h2 { font-size: 15px; font-weight: 700; margin: 0; color: #f1f5f9; }
+.sd-card-header h2 { font-size: 15px; font-weight: 700; margin: 0; color: var(--ink); }
 
 /* ─── EXAM CARDS ─── */
 .sd-exam-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 
 .sd-exam-card {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(43, 38, 32, 0.04); border: 1px solid rgba(43, 38, 32, 0.07);
   border-radius: 13px; padding: 18px 20px;
   display: flex; align-items: center; gap: 18px;
   transition: all 0.15s; cursor: pointer;
 }
 
-.sd-exam-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(52,211,153,0.3); transform: translateX(3px); }
+.sd-exam-card:hover { background: rgba(43, 38, 32, 0.10); border-color: rgba(47, 143, 111,0.3); transform: translateX(3px); }
 
 .sd-exam-icon-wrap {
   width: 46px; height: 46px; border-radius: 13px;
@@ -217,8 +216,8 @@
 }
 
 .sd-exam-body { flex: 1; min-width: 0; }
-.sd-exam-name { font-size: 14px; font-weight: 600; color: #f1f5f9; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sd-exam-meta { font-size: 12px; color: #64748b; margin: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sd-exam-name { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-exam-meta { font-size: 12px; color: var(--ink-faint); margin: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .sd-exam-meta span { display: flex; align-items: center; gap: 5px; }
 
 .sd-exam-action { flex-shrink: 0; }
@@ -230,47 +229,47 @@
   border-radius: 999px; white-space: nowrap;
 }
 
-.sd-badge.open     { background: rgba(52,211,153,0.12); color: #34d399; }
-.sd-badge.upcoming { background: rgba(251,191,36,0.12);  color: #fbbf24; }
-.sd-badge.done     { background: rgba(100,116,139,0.15); color: #94a3b8; }
-.sd-badge.missed   { background: rgba(239,68,68,0.1);    color: #f87171; }
+.sd-badge.open     { background: rgba(47, 143, 111,0.12); color: var(--jade); }
+.sd-badge.upcoming { background: rgba(201, 146, 46,0.12);  color: var(--gold); }
+.sd-badge.done     { background: rgba(140, 128, 113, 0.16); color: var(--ink-mute); }
+.sd-badge.missed   { background: rgba(185, 58, 43,0.1);    color: var(--cinnabar); }
 
 /* ─── BUTTON ─── */
 .sd-btn-primary {
-  background: linear-gradient(135deg, #34d399, #059669);
-  color: #fff; border: none; border-radius: 9px;
+  background: linear-gradient(135deg, var(--jade), var(--jade-dark));
+  color: var(--on-accent); border: none; border-radius: 9px;
   padding: 9px 16px; font-size: 13px; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; gap: 7px;
   transition: all 0.2s; font-family: inherit; white-space: nowrap;
 }
 
-.sd-btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 5px 16px rgba(52,211,153,0.3); }
+.sd-btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 5px 16px rgba(47, 143, 111,0.3); }
 
 .sd-btn-ghost {
-  background: none; border: 1px solid rgba(255,255,255,0.09);
-  color: #64748b; border-radius: 9px; padding: 8px 14px;
+  background: none; border: 1px solid rgba(43, 38, 32, 0.12);
+  color: var(--ink-faint); border-radius: 9px; padding: 8px 14px;
   font-size: 12.5px; font-weight: 500; cursor: pointer;
   font-family: inherit; transition: all 0.15s; display: flex; align-items: center; gap: 6px;
 }
 
-.sd-btn-ghost:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+.sd-btn-ghost:hover { background: rgba(43, 38, 32, 0.10); color: var(--ink-body); }
 
 /* ─── PROGRESS ─── */
 .sd-progress-bar-track {
-  width: 100%; height: 7px; background: rgba(255,255,255,0.06);
+  width: 100%; height: 7px; background: rgba(43, 38, 32, 0.10);
   border-radius: 999px; overflow: hidden; margin-top: 8px;
 }
 
 .sd-progress-bar-fill {
   height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, #34d399, #60a5fa);
+  background: linear-gradient(90deg, var(--jade), var(--azure));
   transition: width 0.4s ease;
 }
 
 /* ─── SCORE HISTORY ─── */
 .sd-score-row {
   display: flex; align-items: center; gap: 14px;
-  padding: 14px 22px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 14px 22px; border-bottom: 1px solid rgba(43, 38, 32, 0.05);
   font-size: 13px;
 }
 
@@ -284,15 +283,15 @@
 
 /* ─── EMPTY STATE ─── */
 .sd-empty {
-  padding: 50px 24px; text-align: center; color: #475569;
+  padding: 50px 24px; text-align: center; color: var(--ink-mute);
 }
 
-.sd-empty h3 { font-size: 15px; font-weight: 600; color: #64748b; margin: 12px 0 6px; }
+.sd-empty h3 { font-size: 15px; font-weight: 600; color: var(--ink-faint); margin: 12px 0 6px; }
 .sd-empty p  { font-size: 13px; margin: 0; }
 
 /* ─── SCROLLBAR ─── */
 .sd-root *::-webkit-scrollbar { width: 5px; }
-.sd-root *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+.sd-root *::-webkit-scrollbar-thumb { background: rgba(43, 38, 32, 0.11); border-radius: 3px; }
 
 @media (max-width: 1080px) {
   .sd-main-grid { grid-template-columns: 1fr; }
@@ -322,21 +321,21 @@
 .sd-list-state {
   padding: 26px 22px;
   display: flex; align-items: center; gap: 10px;
-  font-size: 13px; color: #64748b;
+  font-size: 13px; color: var(--ink-faint);
 }
 
-.sd-list-state.error { color: #f87171; }
+.sd-list-state.error { color: var(--cinnabar); }
 
 /* ─── Bộ lọc trình độ ─── */
 .sd-filter-bar {
   padding: 16px 22px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(43, 38, 32, 0.05);
 }
 
 .sd-filter-label {
   margin: 0 0 11px;
   font-size: 11px; font-weight: 700; letter-spacing: 0.09em;
-  text-transform: uppercase; color: #475569;
+  text-transform: uppercase; color: var(--ink-mute);
 }
 
 .sd-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -344,23 +343,23 @@
 .sd-chip {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 7px 13px; border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #94a3b8; font-size: 12.5px; font-weight: 600;
+  background: rgba(43, 38, 32, 0.05);
+  border: 1px solid rgba(43, 38, 32, 0.11);
+  color: var(--ink-mute); font-size: 12.5px; font-weight: 600;
   font-family: inherit; cursor: pointer;
   transition: all 0.15s;
 }
 
-.sd-chip:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+.sd-chip:hover { background: rgba(43, 38, 32, 0.11); color: var(--ink-body); }
 
 .sd-chip.active {
-  background: rgba(52,211,153,0.13);
-  border-color: rgba(52,211,153,0.45);
-  color: #34d399;
+  background: rgba(47, 143, 111,0.13);
+  border-color: rgba(47, 143, 111,0.45);
+  color: var(--jade);
 }
 
 .sd-chip:focus-visible {
-  outline: 2px solid #34d399;
+  outline: 2px solid var(--jade);
   outline-offset: 2px;
 }
 
@@ -368,40 +367,40 @@
 .sd-chip-count {
   font-size: 11px; font-weight: 700;
   padding: 1px 7px; border-radius: 999px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(43, 38, 32, 0.07);
   color: inherit; opacity: 0.85;
 }
 
 /* Chấm đánh dấu "trình độ bạn đang học" */
 .sd-chip-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #fbbf24; flex-shrink: 0;
+  background: var(--gold); flex-shrink: 0;
 }
 
 .sd-filter-note {
   margin: 12px 0 0;
-  font-size: 12.5px; color: #64748b;
+  font-size: 12.5px; color: var(--ink-faint);
 }
 
 .sd-link-btn {
   background: none; border: none; padding: 0;
-  color: #34d399; font-size: inherit; font-weight: 600;
+  color: var(--jade); font-size: inherit; font-weight: 600;
   font-family: inherit; cursor: pointer; text-decoration: underline;
 }
 
 .sd-link-btn:hover { filter: brightness(1.15); }
 
-.sd-link-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+.sd-link-btn:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
 
 /* ─── Phân trang ─── */
 .sd-pager {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 12px;
   padding: 14px 22px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(43, 38, 32, 0.05);
 }
 
-.sd-pager-info { font-size: 12.5px; color: #64748b; }
+.sd-pager-info { font-size: 12.5px; color: var(--ink-faint); }
 
 .sd-pager-controls { display: flex; align-items: center; gap: 5px; }
 
@@ -409,27 +408,27 @@
   min-width: 32px; height: 32px; padding: 0 8px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 9px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #94a3b8; font-size: 12.5px; font-weight: 600;
+  background: rgba(43, 38, 32, 0.05);
+  border: 1px solid rgba(43, 38, 32, 0.11);
+  color: var(--ink-mute); font-size: 12.5px; font-weight: 600;
   font-family: inherit; cursor: pointer;
   font-variant-numeric: tabular-nums;
   transition: all 0.15s;
 }
 
-.sd-pager-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+.sd-pager-btn:hover:not(:disabled) { background: rgba(43, 38, 32, 0.12); color: var(--ink-body); }
 
 .sd-pager-btn.active {
-  background: rgba(52,211,153,0.15);
-  border-color: rgba(52,211,153,0.45);
-  color: #34d399;
+  background: rgba(47, 143, 111,0.15);
+  border-color: rgba(47, 143, 111,0.45);
+  color: var(--jade);
 }
 
 .sd-pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-.sd-pager-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+.sd-pager-btn:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
 
-.sd-pager-gap { color: #475569; font-size: 12.5px; padding: 0 2px; }
+.sd-pager-gap { color: var(--ink-mute); font-size: 12.5px; padding: 0 2px; }
 
 /* ─── Thẻ lớp học bấm được ───
    Thẻ lớp giờ là nút mở tới đề của lớp, nên phải reset lại kiểu mặc định của
@@ -443,22 +442,22 @@
 }
 
 .sd-class-card:hover {
-  border-color: rgba(52,211,153,0.35);
+  border-color: rgba(47, 143, 111,0.35);
   transform: translateY(-2px);
 }
 
-.sd-class-card:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+.sd-class-card:focus-visible { outline: 2px solid var(--jade); outline-offset: 2px; }
 
 .sd-class-card-foot {
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px; margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(43, 38, 32, 0.05);
 }
 
 .sd-class-card-cta {
   display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12.5px; font-weight: 700; color: #34d399;
+  font-size: 12.5px; font-weight: 700; color: var(--jade);
 }
 
 /* ─── Trang đề của một lớp ─── */
@@ -466,13 +465,13 @@
   display: inline-flex; align-items: center; gap: 7px;
   background: none; border: none; padding: 0;
   margin-bottom: 16px;
-  color: #64748b; font-size: 13px; font-weight: 600;
+  color: var(--ink-faint); font-size: 13px; font-weight: 600;
   font-family: inherit; cursor: pointer;
 }
 
-.sd-back-btn:hover { color: #34d399; }
+.sd-back-btn:hover { color: var(--jade); }
 
-.sd-back-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 3px; border-radius: 4px; }
+.sd-back-btn:focus-visible { outline: 2px solid var(--jade); outline-offset: 3px; border-radius: 4px; }
 
 .sd-class-hero {
   display: flex; align-items: center; gap: 16px;
@@ -481,12 +480,12 @@
 
 .sd-class-hero-icon {
   width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
-  background: rgba(52,211,153,0.12);
+  background: rgba(47, 143, 111,0.12);
   display: flex; align-items: center; justify-content: center;
 }
 
 .sd-class-hero-name {
-  margin: 0 0 7px; font-size: 19px; font-weight: 700; color: #f1f5f9;
+  margin: 0 0 7px; font-size: 19px; font-weight: 700; color: var(--ink);
 }
 
 .sd-class-hero-tags { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
@@ -498,15 +497,15 @@
   padding: 3px 10px; border-radius: 999px;
 }
 
-.sd-tag.subject { background: rgba(96,165,250,0.1); color: #60a5fa; }
-.sd-tag.level   { background: rgba(52,211,153,0.1); color: #34d399; }
+.sd-tag.subject { background: rgba(61, 126, 166,0.1); color: var(--azure); }
+.sd-tag.level   { background: rgba(47, 143, 111,0.1); color: var(--jade); }
 
 /* Huy hiệu "N đề cần làm" cạnh tên lớp ở trang chủ */
 .sd-count-pill {
   display: inline-block; margin-left: 9px;
   font-size: 11px; font-weight: 700;
   padding: 2px 9px; border-radius: 999px;
-  background: rgba(52,211,153,0.14); color: #34d399;
+  background: rgba(47, 143, 111,0.14); color: var(--jade);
   vertical-align: 1px;
 }
 
@@ -515,3 +514,168 @@
   .sd-class-card:hover, .sd-exam-card:hover { transform: none; }
   .sd-spin { animation: none; }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   LỚP TIÊN HIỆP
+   ────────────────────────────────────────────────────────────────
+   Phần trên là bố cục và bảng màu. Phần này chỉ thêm chất liệu:
+   nét khắc mộc ở tiêu đề, chỉ kim tuyến ở mép, dấu triện ở nhãn
+   trạng thái.
+
+   Nguyên tắc tự đặt ra khi viết phần này: chủ đề không được làm
+   khó việc đọc. Mọi hoa văn đều nằm ở viền, ở nền mờ, hoặc ở chỗ
+   trống — không cái nào đè lên chữ hay lên con số. Thí sinh vào
+   đây để xem mình sai câu nào, không phải để ngắm giao diện.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Tiêu đề khắc mộc ── */
+.sd-logo h2,
+.sd-welcome-title,
+.sd-card-header h2,
+.sd-topbar-left h1 {
+  font-family: var(--heading);
+  letter-spacing: 0;
+}
+
+/* Logo: chữ mực đặc + một nét kim tuyến gạch dưới, thay cho chữ
+   gradient vốn mờ nhạt trên nền giấy. */
+.sd-logo h2 {
+  background: none;
+  -webkit-text-fill-color: var(--ink);
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  display: inline-block;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--gold);
+}
+
+/* ── Chỉ kim tuyến dọc mép sidebar ──
+   Một sợi mảnh chuyển từ ngọc sang kim rồi tan dần, gợi mép quyển
+   thư tịch đóng gáy. */
+.sd-sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--jade) 0%,
+    var(--gold) 30%,
+    transparent 75%
+  );
+  opacity: 0.5;
+}
+
+/* ── Thẻ: nẹp kim tuyến ở cạnh trên ── */
+.sd-card {
+  position: relative;
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-sm);
+}
+.sd-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 22px; right: 22px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.45;
+}
+
+/* ── Bảng chào: vân mây ──
+   Hai lớp gradient hình vòng cung xếp chồng ở đáy khối, đọc ra như
+   dải mây dưới chân núi. Rẻ hơn ảnh nền và không kéo thêm request.
+*/
+.sd-welcome-banner {
+  background:
+    radial-gradient(120% 80% at 50% 130%, rgba(47, 143, 111, 0.16), transparent 60%),
+    radial-gradient(90% 70% at 15% 120%, rgba(201, 146, 46, 0.14), transparent 55%),
+    linear-gradient(135deg, var(--jade-tint), var(--paper-raised));
+  border-color: rgba(47, 143, 111, 0.22);
+}
+.sd-welcome-title span {
+  background: linear-gradient(135deg, var(--jade-deep), var(--jade));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Nhãn trạng thái kiểu dấu triện ──
+   Vuông bo nhẹ thay vì viên thuốc, có viền cùng màu chữ — đúng dáng
+   con dấu đóng lên góc văn thư. Viền cũng giải quyết một vấn đề
+   thật: nền nhạt 12% trên giấy gần như không thấy, chỉ còn chữ trôi
+   lơ lửng.
+*/
+.sd-badge {
+  border-radius: 6px;
+  padding: 3px 9px;
+  border: 1px solid currentColor;
+  letter-spacing: 0.01em;
+}
+.sd-badge.open     { background: var(--jade-wash);     color: var(--jade-deep); }
+.sd-badge.upcoming { background: var(--gold-wash);     color: var(--gold-deep); }
+.sd-badge.done     { background: rgba(140, 128, 113, 0.14); color: var(--ink-soft); }
+.sd-badge.missed   { background: var(--cinnabar-wash); color: var(--cinnabar-deep); }
+
+/* ── Thẻ đề thi ── */
+.sd-exam-card {
+  background: var(--paper);
+  border-color: var(--line);
+}
+.sd-exam-card:hover {
+  background: var(--paper-raised);
+  border-color: var(--jade);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Nút ── */
+.sd-btn-ghost {
+  border-color: var(--line-strong);
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+}
+.sd-btn-ghost:hover {
+  background: var(--jade-tint);
+  border-color: var(--jade);
+  color: var(--jade-deep);
+}
+.sd-btn-ghost:disabled {
+  color: var(--ink-faint);
+  border-color: var(--line);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.sd-btn-primary:hover {
+  filter: none;
+  background: linear-gradient(135deg, var(--jade-lit), var(--jade-deep));
+  box-shadow: 0 5px 16px rgba(47, 143, 111, 0.28);
+}
+
+/* ── Ô chỉ số ── */
+.sd-stat-card {
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-sm);
+}
+.sd-stat-value { font-family: var(--heading); }
+
+/* ── Sương núi trong bảng chào ──
+   Ba dải vòng cung xếp lệch nhau ở đáy khối, cao thấp khác nhau, đọc
+   ra như dãy núi mờ dần sau sương. Đây là chi tiết trang trí ĐẬM
+   nhất của cả giao diện, và nó được đặt ở đúng chỗ chịu được: khối
+   chào không chứa số liệu nào, không ai phải đọc gì trên nền nó.
+*/
+.sd-welcome-banner::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 62%;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 100% at 22% 132%, rgba(47, 143, 111, 0.20), transparent 68%),
+    radial-gradient(46% 100% at 52% 148%, rgba(29, 92, 71, 0.16), transparent 66%),
+    radial-gradient(64% 100% at 84% 138%, rgba(201, 146, 46, 0.16), transparent 68%);
+}
+/* Nội dung phải nổi lên trên lớp sương vừa thêm. */
+.sd-welcome-banner > * { position: relative; z-index: 1; }

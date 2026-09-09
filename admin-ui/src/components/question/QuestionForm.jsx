@@ -264,8 +264,8 @@ const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false }) =
                   borderRadius: 8, padding: '12px 14px',
                 }}
               >
-                Câu tự luận không có đáp án chấm tự động. Giáo viên hoặc AI sẽ chấm phần trả lời
-                của học sinh sau khi nộp bài.
+                Câu tự luận không có đáp án chấm tự động. Người ra đề hoặc AI sẽ chấm phần trả lời
+                của thí sinh sau khi nộp bài.
               </div>
             )}
 
@@ -274,7 +274,7 @@ const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false }) =
               <textarea
                 className="td-form-textarea"
                 style={{ minHeight: 70 }}
-                placeholder="Hiện cho học sinh sau khi có kết quả (không bắt buộc)"
+                placeholder="Hiện cho thí sinh sau khi có kết quả (không bắt buộc)"
                 value={explanation}
                 onChange={(e) => setExplanation(e.target.value)}
               />
