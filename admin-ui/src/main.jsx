@@ -13,6 +13,7 @@ import AdminDashboard from './pages/admin/Dashboard.jsx'
 import TeacherDashboard from './pages/teacher/ExamManager.jsx'
 import StudentDashboard from './pages/student/ExamList.jsx'
 import ExamRoom from './pages/student/ExamRoom.jsx'
+import SubmissionReview from './pages/student/SubmissionReview.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -44,6 +45,13 @@ createRoot(document.getElementById('root')).render(
           <Route path="/student/exams/:examId/room" element={
             <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
               <ExamRoom />
+            </ProtectedRoute>
+          } />
+          {/* Xem lại một bài đã nộp. Đứng trước /student/* vì route đó là
+              catch-all và sẽ nuốt mất đường dẫn này. */}
+          <Route path="/student/submissions/:submissionId/review" element={
+            <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+              <SubmissionReview />
             </ProtectedRoute>
           } />
           <Route path="/student/*" element={

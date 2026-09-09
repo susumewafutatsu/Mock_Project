@@ -1,11 +1,11 @@
 // src/components/common/HomeRedirect.jsx
 // Điều hướng cho đường dẫn gốc "/" và mọi URL không khớp route nào.
 //
-// Chưa đăng nhập  → đẩy về trang học sinh; ProtectedRoute ở đó thấy chưa có
+// Chưa đăng nhập  → đẩy về trang thí sinh; ProtectedRoute ở đó thấy chưa có
 //                   session nên tự chuyển tiếp sang /login. Nhờ vậy chỉ có một
 //                   chỗ duy nhất quyết định "khi nào cần đăng nhập".
-// Đã đăng nhập    → về đúng trang chủ của vai trò, tránh việc giáo viên mở "/"
-//                   lại rơi vào trang học sinh rồi nhận màn hình 403.
+// Đã đăng nhập    → về đúng trang chủ của vai trò, tránh việc người ra đề mở "/"
+//                   lại rơi vào trang thí sinh rồi nhận màn hình 403.
 //
 // LƯU Ý khi thêm vai trò mới vào HOME_BY_ROLE: đích đến bắt buộc phải có route
 // thật trong main.jsx. Nếu không, URL đó không khớp route nào nên lại rơi vào

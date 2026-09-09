@@ -7,7 +7,7 @@ const WeakStudentAlert = ({ students = [], threshold = 5.0 }) => {
 
   return (
     <div className="weak-student-alert">
-      <h4>⚠️ Học sinh có nguy cơ ({students.length})</h4>
+      <h4>⚠️ Thí sinh có nguy cơ ({students.length})</h4>
       {/* TODO: Render student list with score */}
     </div>
   );

@@ -1,8 +1,8 @@
 // src/services/analyticsService.js
 // TODO: Implement API calls for analytics
 // - getAdminStats()                    → GET /admin/stats
-// - getClassStats(classId)             → GET /admin/classes/{classId}/stats
-// - getWeakStudents(classId)           → GET /admin/classes/{classId}/weak-students
+// - getRoomStats(roomId)               → GET /admin/rooms/{roomId}/stats
+// - getWeakCandidates(roomId)          → GET /admin/rooms/{roomId}/weak-candidates
 
 import api from './api';
 

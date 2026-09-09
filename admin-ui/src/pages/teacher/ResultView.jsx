@@ -10,7 +10,7 @@ const ResultView = () => {
 
   return (
     <div>
-      <h1>Kết quả kỳ thi</h1>
+      <h1>Kết quả bài thi</h1>
       {/* TODO: Build analytics charts and results table */}
     </div>
   );

@@ -1,10 +1,10 @@
 // src/services/examService.js
-// Gọi API phòng thi của học sinh.
+// Gọi API phòng thi của thí sinh.
 //
 // Hợp đồng thời gian: server là nơi duy nhất có quyền nói còn bao nhiêu giờ.
 // Mọi response ở đây đều mang { serverTime, expiresAt, remainingSeconds }, và
 // client chỉ đếm ngược từ remainingSeconds — không bao giờ tự tính từ đồng hồ
-// máy học sinh (xem hooks/useExamTimer.js).
+// máy thí sinh (xem hooks/useExamTimer.js).
 //
 // Mọi endpoint trả ApiResponse<T> = { success, message, data, error } nên giá
 // trị thật luôn nằm ở data.data.
@@ -13,13 +13,13 @@ import api from './api';
 
 // ── Tìm đề ───────────────────────────────────────────────────────────
 //
-// Ba lối vào cho ba màn hình, không phải một danh sách dùng chung. Học sinh gặp
-// đề thi theo hai đường khác hẳn nhau — bài giáo viên giao trong lớp, và đề tự
+// Ba lối vào cho ba màn hình, không phải một danh sách dùng chung. Thí sinh gặp
+// đề thi theo hai đường khác hẳn nhau — bài người ra đề giao trong lớp, và đề tự
 // do em tự chọn để ôn — nên back-end trả về hai thứ riêng biệt, mỗi thứ có
 // trường `source` nói rõ nó là loại nào.
 //
 // Mọi ExamResponse đều mang sẵn `availability` do server tính; client không bao
-// giờ tự so startTime/endTime với đồng hồ máy học sinh.
+// giờ tự so startTime/endTime với đồng hồ máy thí sinh.
 
 /**
  * Trang chủ: đề đã nhóm sẵn theo lớp, cộng vài đề luyện tập gợi ý.
@@ -35,21 +35,21 @@ export async function getExamBoard() {
 }
 
 /**
- * Toàn bộ đề của MỘT lớp — không phân trang vì một lớp hiếm khi có nhiều đề.
- * Ném 404 nếu học sinh không học lớp đó.
+ * Toàn bộ đề của MỘT phòng thi — không phân trang vì một phòng hiếm khi có nhiều đề.
+ * Ném 404 nếu thí sinh không ở trong phòng đó.
  * @returns ExamResponse[]
  */
-export async function getClassExams(classId) {
-  const { data } = await api.get(`/student/classes/${classId}/exams`);
+export async function getRoomExams(roomId) {
+  const { data } = await api.get(`/student/rooms/${roomId}/exams`);
   return data.data;
 }
 
 /**
  * Một trang đề luyện tập tự do, kèm bộ lọc trình độ.
  *
- * Không truyền levelId/subjectId thì server tự chọn một trình độ theo lớp học
+ * Không truyền levelId/subjectId thì server tự chọn một trình độ theo phòng thi
  * sinh đang học và bật `filteredByEnrolledLevels` — client phải hiện lối thoát
- * "xem tất cả trình độ", nếu không học sinh sẽ tưởng đây là toàn bộ đề.
+ * "xem tất cả trình độ", nếu không thí sinh sẽ tưởng đây là toàn bộ đề.
  *
  * @param params { levelId?, subjectId?, page = 0, size = 12 } — page đếm từ 0
  * @returns PracticeExamsResponse
@@ -95,7 +95,7 @@ export async function startExam(examId) {
 /**
  * Đọc lại phiên đang dở, không tạo mới. Dùng khi mạng vừa trở lại: lấy về toàn
  * bộ đáp án đã lưu trên server và thời gian còn lại thật.
- * Ném 404 nếu học sinh chưa từng bắt đầu đề này.
+ * Ném 404 nếu thí sinh chưa từng bắt đầu đề này.
  */
 export async function getSession(examId) {
   const { data } = await api.get(`/student/exams/${examId}/session`);
@@ -103,7 +103,7 @@ export async function getSession(examId) {
 }
 
 /**
- * Autosave một câu. Gọi ngay mỗi lần học sinh bấm chọn, không đợi nộp bài.
+ * Autosave một câu. Gọi ngay mỗi lần thí sinh bấm chọn, không đợi nộp bài.
  * Upsert theo (submissionId, questionId) nên gửi lại cùng một câu là an toàn.
  * @param answer { questionId, snapshotAnswerId?, essayResponse? }
  *        snapshotAnswerId = null để bỏ chọn; essayResponse rỗng để xoá bài viết.
@@ -115,7 +115,7 @@ export async function saveAnswer(examId, answer) {
 }
 
 /**
- * Nhịp sống của client, gọi mỗi 15-30 giây. Chỉ để server biết học sinh còn kết
+ * Nhịp sống của client, gọi mỗi 15-30 giây. Chỉ để server biết thí sinh còn kết
  * nối — KHÔNG gia hạn thêm giờ.
  * @returns HeartbeatResponse — { remainingSeconds, autoSubmitted, recoveredFromAtRisk, ... }
  *          autoSubmitted = true nghĩa là server vừa chốt bài vì hết giờ.
@@ -158,13 +158,27 @@ export async function getStudentResults() {
  * từ trước. Server dùng 409 cho mọi trường hợp này (BusinessException).
  *
  * Dùng status chứ không so nội dung message: message là câu tiếng Việt để hiện
- * cho học sinh đọc, sửa lại lúc nào cũng được mà không làm hỏng logic client.
+ * cho thí sinh đọc, sửa lại lúc nào cũng được mà không làm hỏng logic client.
  */
 export function isSessionClosedError(error) {
   return error?.status === 409;
 }
 
-/** Học sinh chưa từng bắt đầu đề này (getSession trả 404). */
+/**
+ * Lỗi "đã dùng hết số lượt làm bài".
+ *
+ * Cũng là 409 như mọi BusinessException khác, nên phải phân biệt bằng nội dung
+ * message — server không có mã lỗi riêng cho từng nguyên nhân. Chỗ duy nhất
+ * trong client làm việc này; nếu về sau back-end thêm mã lỗi thì sửa đúng ở đây.
+ *
+ * Dùng để chọn tiêu đề thông báo cho đúng, KHÔNG dùng để quyết định có chặn hay
+ * không — việc chặn là của server và đã xong trước khi lỗi về tới đây.
+ */
+export function isAttemptsExhaustedError(error) {
+  return error?.status === 409 && /hết\s.*lượt/i.test(error?.message || '');
+}
+
+/** Thí sinh chưa từng bắt đầu đề này (getSession trả 404). */
 export function isNoSessionError(error) {
   return error?.status === 404;
 }

@@ -57,3 +57,17 @@ export const HOME_BY_ROLE = {
   [ROLES.TEACHER]: ROUTES.TEACHER_EXAMS,
   [ROLES.STUDENT]: ROUTES.STUDENT_EXAMS,
 };
+
+// Nhãn tiếng Việt cho LessonType của backend (GRAMMAR | KANJI | VOCAB |
+// READING | LISTENING). Dùng ở cả trang khoá học của thí sinh lẫn màn duyệt
+// của quản trị viên, nên để ở đây thay vì export từ một file component.
+//
+// `cls` là hậu tố class CSS trong Study.css — mỗi loại một màu, vì loại bài
+// quyết định cách hiển thị chứ không phải nhãn trang trí.
+export const LESSON_TYPE = {
+  GRAMMAR:   { label: 'Ngữ pháp', cls: '' },
+  KANJI:     { label: 'Chữ Hán',  cls: 'kanji' },
+  VOCAB:     { label: 'Từ vựng',  cls: 'vocab' },
+  READING:   { label: 'Đọc hiểu', cls: 'reading' },
+  LISTENING: { label: 'Nghe',     cls: 'reading' },
+};

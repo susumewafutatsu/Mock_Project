@@ -1,5 +1,5 @@
 // src/services/questionService.js
-// Gọi API ngân hàng câu hỏi + câu hỏi của giáo viên.
+// Gọi API ngân hàng câu hỏi + câu hỏi của người ra đề.
 //
 // Đường dẫn lồng theo ngân hàng (/question-banks/{bankId}/questions) chứ không
 // phải ?bankId=... — backend dùng bankId trong path để kiểm tra quyền sở hữu
@@ -12,7 +12,7 @@ import api from './api';
 
 // ── Ngân hàng câu hỏi ────────────────────────────────────────────────
 
-/** Danh sách ngân hàng của giáo viên đang đăng nhập → QuestionBankResponse[] */
+/** Danh sách ngân hàng của người ra đề đang đăng nhập → QuestionBankResponse[] */
 export async function getMyBanks() {
   const { data } = await api.get('/teacher/question-banks');
   return data.data;
@@ -85,7 +85,7 @@ export async function attachQuestionsToExam(examId, selections) {
 
 /**
  * Cập nhật snapshot của một câu hỏi trong đề theo bản mới nhất trong ngân hàng.
- * Trả lỗi 409 nếu đề đã có học sinh làm bài.
+ * Trả lỗi 409 nếu đề đã có thí sinh làm bài.
  */
 export async function refreshExamQuestionSnapshot(examId, questionId) {
   await api.post(`/teacher/exams/${examId}/questions/${questionId}/refresh-snapshot`);

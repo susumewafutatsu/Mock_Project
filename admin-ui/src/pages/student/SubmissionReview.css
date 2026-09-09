@@ -1,0 +1,405 @@
+/* src/pages/student/SubmissionReview.css
+   Trang xem lại một bài đã nộp.
+
+   Bảng màu và nền lấy đúng theo StudentDashboard.css để hai trang không lệch
+   nhau; ở đây chỉ định nghĩa những thứ trang kia không có: thẻ từng câu hỏi,
+   các lựa chọn được tô theo đúng/sai, và lưới điều hướng câu.
+
+   Ba màu mang nghĩa cố định trong toàn trang, không dùng lẫn cho việc khác:
+     xanh lá  = đáp án đúng
+     đỏ       = lựa chọn sai của thí sinh
+     xanh dương = bài làm của thí sinh khi chưa biết đúng sai (tự luận chờ chấm,
+                  hoặc đề tắt xem đáp án) */
+
+.sr-root {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink-body);
+  font-size: 14px;
+}
+
+.sr-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 18px 60px;
+}
+
+/* ── Thanh đầu trang ─────────────────────────────────────────── */
+
+.sr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--ink-mute);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 0;
+  margin-bottom: 10px;
+}
+.sr-back:hover { color: var(--ink-body); }
+
+.sr-head {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.sr-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.sr-sub {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sr-sub span { display: inline-flex; align-items: center; gap: 5px; }
+
+.sr-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sr-score-tile {
+  flex: 1 1 120px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.sr-score-tile b {
+  display: block;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.sr-score-tile small {
+  font-size: 11.5px;
+  color: var(--ink-mute);
+}
+
+.sr-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.sr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+.sr-btn:hover { border-color: var(--ink-mute); }
+.sr-btn.primary {
+  background: linear-gradient(135deg, var(--jade), var(--jade-lit));
+  border-color: transparent;
+  color: var(--on-jade);
+}
+
+/* ── Dải thông báo ───────────────────────────────────────────── */
+
+.sr-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.sr-note.info {
+  background: rgba(61, 126, 166, 0.1);
+  border: 1px solid rgba(61, 126, 166, 0.3);
+  color: var(--azure-deep);
+}
+.sr-note.warn {
+  background: rgba(201, 146, 46, 0.1);
+  border: 1px solid rgba(201, 146, 46, 0.3);
+  color: var(--gold-deep);
+}
+
+/* ── Lưới điều hướng câu hỏi ─────────────────────────────────── */
+
+.sr-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.sr-nav-cell {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sr-nav-cell:hover { border-color: var(--ink-faint); }
+.sr-nav-cell.correct {
+  background: rgba(47, 143, 111, 0.16);
+  border-color: rgba(47, 143, 111, 0.5);
+  color: var(--jade-deep);
+}
+.sr-nav-cell.wrong {
+  background: rgba(185, 58, 43, 0.14);
+  border-color: rgba(185, 58, 43, 0.45);
+  color: var(--cinnabar-deep);
+}
+.sr-nav-cell.pending {
+  background: rgba(61, 126, 166, 0.14);
+  border-color: rgba(61, 126, 166, 0.45);
+  color: var(--azure-lit);
+}
+
+/* ── Thẻ một câu hỏi ─────────────────────────────────────────── */
+
+.sr-q {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  scroll-margin-top: 16px;
+}
+.sr-q.correct { border-left-color: var(--jade); }
+.sr-q.wrong { border-left-color: var(--cinnabar); }
+.sr-q.pending { border-left-color: var(--azure); }
+.sr-q.blank { border-left-color: var(--ink-faint); }
+
+.sr-q-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.sr-q-no {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  letter-spacing: 0.03em;
+}
+.sr-q-verdict {
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.sr-q-verdict.correct { background: rgba(47, 143, 111, 0.15); color: var(--jade-deep); }
+.sr-q-verdict.wrong { background: rgba(185, 58, 43, 0.14); color: var(--cinnabar-deep); }
+.sr-q-verdict.pending { background: rgba(61, 126, 166, 0.14); color: var(--azure-lit); }
+.sr-q-verdict.blank { background: rgba(140, 128, 113, 0.14); color: var(--ink-soft); }
+
+.sr-q-points {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.sr-q-content {
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+  white-space: pre-wrap;
+}
+
+/* ── Lựa chọn ────────────────────────────────────────────────── */
+
+.sr-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  background: var(--paper);
+}
+.sr-opt.correct {
+  border-color: rgba(47, 143, 111, 0.5);
+  background: rgba(47, 143, 111, 0.08);
+}
+.sr-opt.wrong {
+  border-color: rgba(185, 58, 43, 0.5);
+  background: rgba(185, 58, 43, 0.07);
+}
+.sr-opt.picked {
+  border-color: rgba(61, 126, 166, 0.5);
+  background: rgba(61, 126, 166, 0.07);
+}
+
+.sr-opt-key {
+  flex: 0 0 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sr-opt.correct .sr-opt-key { background: rgba(47, 143, 111, 0.22); color: var(--jade-deep); }
+.sr-opt.wrong .sr-opt-key { background: rgba(185, 58, 43, 0.2); color: var(--cinnabar-deep); }
+.sr-opt.picked .sr-opt-key { background: rgba(61, 126, 166, 0.2); color: var(--azure-lit); }
+
+.sr-opt-text { flex: 1; }
+
+.sr-opt-tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-mute);
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* ── Bài tự luận + lời giải ──────────────────────────────────── */
+
+.sr-essay {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 11px 13px;
+  background: var(--paper);
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.sr-essay.empty { color: var(--ink-faint); font-style: italic; }
+
+.sr-explain {
+  margin-top: 10px;
+  border-left: 2px solid var(--ink-mute);
+  padding: 2px 0 2px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+.sr-explain b {
+  display: block;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  margin-bottom: 3px;
+}
+
+/* ── Trạng thái tải ──────────────────────────────────────────── */
+
+.sr-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 60px 20px;
+  color: var(--ink-mute);
+  font-size: 13.5px;
+}
+.sr-state.error { color: var(--cinnabar-deep); }
+
+.sr-spin { animation: sr-rotate 0.9s linear infinite; }
+@keyframes sr-rotate { to { transform: rotate(360deg); } }
+
+/* ════════════════════════════════════════════════════════════════
+   LỚP TIÊN HIỆP — XEM LẠI BÀI
+   ────────────────────────────────────────────────────────────────
+   Trang này ngược với phòng thi: thí sinh ở đây để ĐỌC lời giải,
+   không bị bấm giờ. Nên nó được phép trang trí nhiều hơn một chút —
+   nẹp kim tuyến ở đầu thẻ tổng kết, dấu triện ở nhãn đúng/sai.
+
+   Ba màu ngữ nghĩa khai báo ở đầu file vẫn giữ nguyên vai trò; phần
+   này chỉ đổi vật liệu, không đổi ý nghĩa màu.
+   ════════════════════════════════════════════════════════════════ */
+
+.sr-title,
+.sr-score-tile b {
+  font-family: var(--heading);
+}
+
+/* Thẻ tổng kết: nẹp kim tuyến chạy hết cạnh trên, như dải triện
+   trên đầu một tờ bảng vàng. */
+.sr-head {
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.sr-head::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--jade), var(--gold), var(--jade));
+  opacity: 0.65;
+}
+
+.sr-q,
+.sr-nav {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Nhãn đúng/sai kiểu dấu triện: vuông bo nhẹ, có viền cùng màu chữ.
+   Trên nền giấy, mảng tô 14% một mình không đủ tách khỏi nền. */
+.sr-q-verdict {
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  padding: 2px 8px;
+}
+
+/* Ô điều hướng: giữ hình vuông bo góc, thêm viền đậm hơn cho ô đã
+   có kết quả — lưới này phải đọc được bằng liếc mắt, không phải
+   bằng cách nhìn kỹ từng ô. */
+.sr-nav-cell {
+  font-family: var(--heading);
+  font-weight: 700;
+}
+.sr-nav-cell.correct { border-width: 1.5px; }
+.sr-nav-cell.wrong   { border-width: 1.5px; }
+.sr-nav-cell.pending { border-width: 1.5px; }
+
+.sr-btn.primary:hover {
+  background: linear-gradient(135deg, var(--jade-lit), var(--jade-deep));
+}
+
+/* Lời giải: lùi vào sau một nét mực dọc, như phần chú giải viết tay
+   bên lề sách. Đây là chỗ đáng đọc nhất trang, nên nó được nền riêng
+   thay vì trôi lẫn vào thân thẻ. */
+.sr-explain {
+  border-left-color: var(--gold);
+  border-left-width: 3px;
+  background: var(--gold-wash);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 12px;
+}
+.sr-explain b { color: var(--gold-deep); }

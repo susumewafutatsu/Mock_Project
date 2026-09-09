@@ -61,7 +61,7 @@ const RegisterPage = () => {
             }}
           >
             <BookOpen size={18} />
-            Học sinh
+            Thí sinh
           </button>
           <button 
             type="button"
@@ -75,7 +75,7 @@ const RegisterPage = () => {
             }}
           >
             <User size={18} />
-            Giáo viên
+            Người ra đề
           </button>
         </div>
 

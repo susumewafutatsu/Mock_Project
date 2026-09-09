@@ -1,0 +1,648 @@
+/* src/pages/student/Study.css — góc học tập: sổ tay câu sai và thẻ ghi nhớ.
+ *
+ * Dùng chung bộ token của index.css. Ba màu ngữ nghĩa giữ đúng ý nghĩa cố
+ * định đã quy ước: --jade là đúng/đã thuộc, --cinnabar là sai/quên,
+ * --gold là cần chú ý/đến hạn.
+ *
+ * Khác biệt lớn nhất so với các màn hình khác: ở đây có chữ Nhật. Mọi chỗ
+ * hiển thị kana/kanji đều phải mang class .jp và lang="ja" — xem chú thích
+ * cuối index.css để biết vì sao thiếu nó là người học thuộc nhầm mặt chữ.
+ */
+
+/* ── Khung chung ───────────────────────────────────────────────────── */
+.st-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.st-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.st-head h2 {
+  font-family: var(--heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.st-head p {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* ── Dải số liệu ───────────────────────────────────────────────────── */
+.st-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.st-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  min-width: 92px;
+}
+
+.st-stat b {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-stat span {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.st-stat.due   b { color: var(--gold); }
+.st-stat.done  b { color: var(--jade); }
+.st-stat.wrong b { color: var(--cinnabar); }
+
+/* ── Trạng thái rỗng / tải / lỗi ───────────────────────────────────── */
+.st-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.st-empty-icon { font-size: 34px; line-height: 1; }
+.st-empty h3 { font-family: var(--heading); font-size: 15px; color: var(--ink); margin: 0; }
+.st-empty p  { font-size: 13px; color: var(--ink-faint); margin: 0; max-width: 46ch; }
+
+.st-error {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--cinnabar-wash);
+  border: 1px solid rgba(185, 58, 43, 0.25);
+  color: var(--cinnabar-deep);
+  font-size: 13px;
+}
+
+/* ── Thẻ câu hỏi trong sổ tay ──────────────────────────────────────── */
+.st-mistake {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Câu tới hạn ôn được đánh dấu bằng một vệt kim sắc bên trái — đủ để nhận ra
+   khi lướt, không ồn tới mức át nội dung câu hỏi. */
+.st-mistake.due { border-left: 3px solid var(--gold); }
+
+.st-mistake-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.st-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.st-tag.wrong { background: var(--cinnabar-wash); color: var(--cinnabar-deep); }
+.st-tag.due   { background: var(--gold-wash);     color: var(--gold-deep); }
+.st-tag.streak{ background: var(--jade-wash);     color: var(--jade-deep); }
+.st-tag.type  { background: var(--azure-wash);    color: var(--azure-deep); }
+
+.st-question {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-body);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ── Lựa chọn đáp án ───────────────────────────────────────────────── */
+.st-options {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.st-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  text-align: left;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-body);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.st-option:hover:not(:disabled) { border-color: var(--line-strong); background: var(--paper-deep); }
+.st-option:disabled { cursor: default; }
+.st-option:focus-visible { outline: 2px solid var(--azure); outline-offset: 1px; }
+
+.st-option.picked  { border-color: var(--azure); background: var(--azure-wash); }
+.st-option.correct { border-color: var(--jade); background: var(--jade-wash); }
+.st-option.wrong   { border-color: var(--cinnabar); background: var(--cinnabar-wash); }
+
+.st-option-key {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--paper-deep);
+  border: 1px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.st-option.correct .st-option-key { background: var(--jade); border-color: var(--jade); color: var(--on-jade); }
+.st-option.wrong   .st-option-key { background: var(--cinnabar); border-color: var(--cinnabar); color: #fff; }
+
+/* ── Kết quả sau khi trả lời ───────────────────────────────────────── */
+.st-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.st-verdict.ok   { background: var(--jade-wash);     color: var(--jade-deep); }
+.st-verdict.no   { background: var(--cinnabar-wash); color: var(--cinnabar-deep); }
+.st-verdict b    { font-weight: 700; }
+.st-verdict p    { margin: 0; color: var(--ink-body); }
+
+/* ── Nút ───────────────────────────────────────────────────────────── */
+.st-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 15px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-raised);
+  color: var(--ink-body);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.st-btn:hover:not(:disabled) { background: var(--paper-deep); }
+.st-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.st-btn:focus-visible { outline: 2px solid var(--azure); outline-offset: 1px; }
+
+.st-btn.primary {
+  background: linear-gradient(135deg, var(--jade), var(--jade-lit));
+  border-color: var(--jade-dark);
+  color: var(--on-jade);
+}
+.st-btn.primary:hover:not(:disabled) { background: var(--jade-dark); }
+
+.st-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* ── Bộ thẻ ────────────────────────────────────────────────────────── */
+.st-decks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.st-deck {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  box-shadow: var(--shadow-sm);
+}
+
+.st-deck h3 {
+  font-family: var(--heading);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.st-deck-desc {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  margin: 0;
+  line-height: 1.55;
+  /* Mô tả dài ngắn khác nhau không được làm các thẻ lệch chiều cao nhau */
+  flex: 1;
+}
+
+.st-deck-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thanh tiến độ: phần đã thuộc màu ngọc, phần đã ghi danh nhưng chưa thuộc
+   màu kim sắc, phần chưa học để trống. Ba trạng thái thật, không phải trang trí. */
+.st-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--paper-deep);
+  overflow: hidden;
+  display: flex;
+}
+
+.st-progress-mature   { background: var(--jade); }
+.st-progress-learning { background: var(--gold); }
+
+/* ── Phiên ôn thẻ ──────────────────────────────────────────────────── */
+.st-session {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.st-session-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.st-session-bar .st-progress { flex: 1; }
+
+.st-card {
+  width: 100%;
+  max-width: 520px;
+  min-height: 260px;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+/* Mặt trước: chữ cần nhớ, để thật to. Đây là thứ duy nhất người học nhìn
+   trước khi tự kiểm tra, nên không có gì được cạnh tranh với nó. */
+.st-card-prompt {
+  font-size: 52px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 0;
+}
+
+.st-card-prompt.kanji { font-size: 84px; font-weight: 400; }
+
+.st-card-reading {
+  font-size: 20px;
+  color: var(--jade-deep);
+  margin: 0;
+}
+
+.st-card-meaning {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-body);
+  margin: 0;
+}
+
+.st-card-sub {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+.st-card-divider {
+  width: 60px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.st-card-example {
+  font-size: 15px;
+  color: var(--ink-body);
+  margin: 0;
+  line-height: 1.7;
+}
+
+.st-card-example-vi {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  margin: 0;
+}
+
+.st-readings {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.st-reading-row { display: flex; align-items: baseline; gap: 6px; }
+.st-reading-row span { font-size: 11px; color: var(--ink-faint); font-weight: 700; }
+
+.st-mnemonic {
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 40ch;
+}
+
+/* ── Bốn nút đánh giá ──────────────────────────────────────────────── */
+.st-grades {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.st-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 11px 6px;
+  border-radius: 11px;
+  border: 1px solid var(--line-strong);
+  background: var(--paper-raised);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-body);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.st-grade small {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.st-grade:hover:not(:disabled) { background: var(--paper-deep); }
+.st-grade:disabled { opacity: 0.5; cursor: not-allowed; }
+.st-grade:focus-visible { outline: 2px solid var(--azure); outline-offset: 1px; }
+
+.st-grade.again { border-color: rgba(185, 58, 43, 0.4); color: var(--cinnabar-deep); }
+.st-grade.hard  { border-color: rgba(201, 146, 46, 0.4); color: var(--gold-deep); }
+.st-grade.good  { border-color: rgba(61, 126, 166, 0.4); color: var(--azure-deep); }
+.st-grade.easy  { border-color: rgba(47, 143, 111, 0.45); color: var(--jade-deep); }
+
+@media (max-width: 520px) {
+  .st-grades { grid-template-columns: repeat(2, 1fr); }
+  .st-card-prompt { font-size: 40px; }
+  .st-card-prompt.kanji { font-size: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-option, .st-btn, .st-grade { transition: none; }
+}
+
+/* Vòng xoay chờ. Định nghĩa tại chỗ vì index.css không có sẵn, và mỗi màn
+   hình hiện đang tự khai báo animation của riêng nó (sd-spin, er-spin). */
+.st-spin { animation: st-spin 0.9s linear infinite; }
+
+@keyframes st-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-spin { animation: none; }
+}
+
+/* ── Khoá học ──────────────────────────────────────────────────────
+ *
+ * Dùng lại .st-deck / .st-progress của phần bộ thẻ: khoá học và bộ thẻ
+ * đều là "một thứ để học, có tiến độ", nên chúng nên nhìn giống nhau.
+ * Chỉ thêm những gì khoá học có mà bộ thẻ không có: nhãn trạng thái
+ * duyệt và trang đọc lý thuyết.
+ */
+
+/* Nhãn trạng thái duyệt. Bốn màu bám đúng ngữ nghĩa đã quy ước ở
+   index.css: kim sắc = đang chờ, ngọc = đã qua, chu sa = bị trả lại. */
+.st-course-status {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.st-course-status.draft     { background: var(--paper-deep);     color: var(--ink-mute); }
+.st-course-status.pending   { background: var(--gold-wash);      color: var(--gold-deep); }
+.st-course-status.published { background: var(--jade-wash);      color: var(--jade-deep); }
+.st-course-status.rejected  { background: var(--cinnabar-wash);  color: var(--cinnabar-deep); }
+
+/* Lý do bị từ chối — phải nổi bật, vì nó là thứ tác giả cần đọc để sửa. */
+.st-review-note {
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--cinnabar-wash);
+  border-left: 3px solid var(--cinnabar);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-body);
+}
+
+.st-review-note b { color: var(--cinnabar-deep); }
+
+/* ── Trang đọc lý thuyết ───────────────────────────────────────────
+ *
+ * Đây là chỗ người học ĐỌC ĐOẠN DÀI, khác hẳn mọi màn hình khác của
+ * ứng dụng vốn là danh sách và nút bấm. Nên nó được bề rộng dòng hẹp
+ * (~68 ký tự) và cỡ chữ lớn hơn — hai thứ quyết định việc đọc lâu có
+ * mỏi mắt hay không.
+ */
+.st-lesson {
+  max-width: 68ch;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.st-lesson-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.st-lesson-head h2 {
+  font-family: var(--heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.st-lesson-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* Nội dung lý thuyết. white-space: pre-wrap vì nội dung là văn bản thuần
+   có xuống dòng thật — không phải HTML, nên không cần và không nên
+   dựng markup từ chuỗi của người dùng. */
+.st-lesson-body {
+  white-space: pre-wrap;
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink-body);
+}
+
+.st-lesson-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* Thanh tiến độ có số phần trăm bên cạnh */
+.st-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.st-progress-row .st-progress { flex: 1; }
+
+/* Một dòng bài trong danh sách bài của khoá */
+.st-lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  text-align: left;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--ink-body);
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.st-lesson-row:hover { border-color: var(--line-strong); background: var(--paper-deep); }
+.st-lesson-row:focus-visible { outline: 2px solid var(--azure); outline-offset: 1px; }
+.st-lesson-row.done { border-left: 3px solid var(--jade); }
+
+.st-lesson-no {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--paper-deep);
+  border: 1px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.st-lesson-row.done .st-lesson-no {
+  background: var(--jade);
+  border-color: var(--jade);
+  color: var(--on-jade);
+}
+
+/* Nhãn loại bài. Không phải trang trí — GRAMMAR và KANJI hiển thị khác
+   nhau, nên người học cần biết mình sắp mở loại nào. */
+.st-lesson-type {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--azure-wash);
+  color: var(--azure-deep);
+  white-space: nowrap;
+}
+
+.st-lesson-type.kanji   { background: var(--violet-wash);   color: var(--violet-dark); }
+.st-lesson-type.vocab   { background: var(--jade-wash);     color: var(--jade-deep); }
+.st-lesson-type.reading { background: var(--gold-wash);     color: var(--gold-deep); }

@@ -1,111 +1,193 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Noto+Serif:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+/* src/index.css — nền tảng giao diện toàn ứng dụng.
+ *
+ * ── Vì sao tông "tu tiên" nền sáng ───────────────────────────────────────
+ *
+ * Bản trước dùng nền slate gần đen. Nền tối hợp với công cụ người ta mở cả
+ * ngày (IDE, dashboard giám sát), nhưng đây là chỗ thí sinh ĐỌC: đọc đề, đọc
+ * lời giải, đọc lại bài mình đã làm. Chữ sáng trên nền tối làm mắt mỏi nhanh
+ * hơn khi phải đọc đoạn dài, và quan trọng hơn là nó không gợi ra không khí
+ * học hành — nó gợi ra phòng máy chủ.
+ *
+ * Bảng màu ở đây lấy từ tranh thuỷ mặc và bối cảnh tiên hiệp: giấy tuyên làm
+ * nền, mực nho làm chữ, ngọc bích cho cái đúng, chu sa cho cái sai, kim sắc
+ * cho cái đáng chú ý. Nó sáng và ấm như trang sách, nhưng vẫn có một bản sắc
+ * riêng thay vì trắng trơn.
+ *
+ * ── Quy ước dùng token ──────────────────────────────────────────────────
+ *
+ * Mọi màu trong ứng dụng phải lấy từ các biến dưới đây. Đừng viết mã hex
+ * thẳng vào component: bảng màu này còn đổi, và mỗi hex rải rác là một chỗ sẽ
+ * bị bỏ sót.
+ *
+ * Ba màu ngữ nghĩa có ý nghĩa CỐ ĐỊNH, không được mượn để trang trí:
+ *   --jade     = đúng / đạt / hoàn thành
+ *   --cinnabar = sai / lỗi / nguy hiểm
+ *   --gold     = cần chú ý / đang chờ / sắp hết hạn
+ */
+
+:root {
+  /* ── Giấy: nền, từ sâu nhất tới nổi nhất ── */
+  --paper-deep: #efe7d7;   /* rãnh chìm: ô input, vùng lõm trong thẻ */
+  --paper: #f5efe2;        /* nền trang */
+  --paper-raised: #fffdf7; /* thẻ, sidebar, thanh công cụ */
+
+  /* ── Mực: chữ, từ đậm tới mờ ── */
+  --ink: #2b2620;          /* tiêu đề */
+  --ink-body: #3d372e;     /* nội dung */
+  --ink-soft: #5c5346;     /* chữ phụ */
+  --ink-mute: #8c8071;     /* nhãn, chú thích */
+  --ink-faint: #9c907e;    /* chữ mờ nhất còn đọc được */
+
+  /* ── Đường viền ── */
+  --line: #e3d9c6;
+  --line-strong: #d4c5a9;
+
+  /* ── Ngọc bích: đúng / đạt ── */
+  --jade: #2f8f6f;
+  --jade-lit: #268a68;     /* điểm cuối gradient nút chính */
+  --jade-dark: #1d7a5c;    /* trạng thái nhấn giữ */
+  --jade-deep: #1d5c47;    /* chữ ngọc trên nền nhạt */
+  --jade-tint: #eef6f2;    /* mảng nền ngọc rất nhạt */
+  --jade-wash: rgba(47, 143, 111, 0.12);
+  --on-jade: #f7fbf9;      /* chữ đặt trên nền ngọc đặc */
+  --on-accent: #fffdfa;   /* chữ trên nền gradient đặc (tím / ngọc) */
+
+  /* ── Chu sa: sai / nguy ── */
+  --cinnabar: #b93a2b;
+  --cinnabar-deep: #a33325;
+  --cinnabar-wash: rgba(185, 58, 43, 0.1);
+
+  /* ── Kim sắc: chú ý / chờ ── */
+  --gold: #c9922e;
+  --gold-deep: #8a6417;
+  --gold-wash: rgba(201, 146, 46, 0.12);
+
+  /* ── Thanh thiên: thông tin trung tính ── */
+  --azure: #3d7ea6;
+  --azure-lit: #2c6285;
+  --azure-deep: #24506e;
+  --azure-wash: rgba(61, 126, 166, 0.1);
+
+  /* ── Tử khí: màu thương hiệu, dùng cho khu người ra đề ── */
+  --violet: #7c5cbf;
+  --violet-dark: #6a4aa8;
+  --violet-wash: rgba(124, 92, 191, 0.12);
+
+  /* ── Bóng đổ: mềm và ấm, không phải bóng đen ── */
+  --shadow-sm: 0 1px 2px rgba(90, 74, 48, 0.06);
+  --shadow: 0 4px 14px rgba(90, 74, 48, 0.08);
+  --shadow-lg: 0 12px 32px rgba(90, 74, 48, 0.12);
+
+  /* ── Chữ ──
+   * Noto Serif cho tiêu đề: có dấu tiếng Việt đầy đủ, và nét chân của nó gợi
+   * bản khắc gỗ — đúng chất tiên hiệp mà vẫn đọc tốt. Be Vietnam Pro cho nội
+   * dung vì nó được thiết kế riêng cho dấu tiếng Việt, không bị chồng dấu ở
+   * cỡ nhỏ như các font sans quốc tế.
+   */
+  --sans: 'Be Vietnam Pro', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Noto Serif', Georgia, 'Times New Roman', serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color-scheme: light;
+  color: var(--ink-body);
+  background: var(--paper);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
 }
 
 body {
   margin: 0;
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink-body);
 }
 
+/* Ứng dụng tự lo bố cục của mình. Bản scaffold của Vite ép #root rộng 1126px,
+   canh giữa, có viền hai bên — đúng cho một trang giới thiệu, nhưng nó cắt cụt
+   mọi dashboard toàn màn hình bên trong. */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
+/* ── Nền giấy tuyên ──
+ * Ba lớp gradient rất nhạt chồng lên nhau, để mặt giấy không phẳng lì một màu.
+ * Cố tình giữ độ tương phản cực thấp (dưới 3%): đây là chất liệu, không phải
+ * hoa văn — thấy rõ được nó là đã quá tay và bắt đầu chọi với nội dung.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, rgba(47, 143, 111, 0.05), transparent 60%),
+    radial-gradient(50rem 50rem at 105% 8%, rgba(201, 146, 46, 0.06), transparent 55%),
+    radial-gradient(45rem 45rem at 50% 115%, rgba(124, 92, 191, 0.04), transparent 60%);
+}
+
+h1, h2, h3 {
   font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+  color: var(--ink);
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
+p { margin: 0; }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  font-family: var(--mono);
+  font-size: 0.92em;
+  border-radius: 4px;
+  padding: 2px 6px;
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+/* ── Thanh cuộn ──
+ * Mảnh và cùng tông giấy. Thanh cuộn mặc định của Windows là một dải xám lạnh
+ * chạy dọc mép mọi danh sách — đủ để phá tông ấm của cả trang.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); background-clip: content-box; }
+
+/* Vòng focus dùng chung — bàn phím phải đi được khắp nơi, và vòng focus mặc
+   định của trình duyệt gần như tàng hình trên nền giấy. */
+:focus-visible {
+  outline: 2px solid var(--jade);
+  outline-offset: 2px;
+}
+
+/* ── Chữ Nhật ───────────────────────────────────────────────────────────
+ *
+ * Be Vietnam Pro không có glyph tiếng Nhật, nên chữ kana/kanji rơi xuống font
+ * hệ thống — trên Windows đó thường là một font Trung, và chữ Hán Nhật với
+ * chữ Hán Trung có nhiều chữ khác hẳn tự dạng (直, 骨, 今). Người học sẽ học
+ * thuộc một mặt chữ sai mà không hề biết.
+ *
+ * Luôn dùng kèm lang="ja" trên phần tử: trình duyệt cần biết ngôn ngữ mới
+ * chọn đúng glyph, chỉ đặt font-family là chưa đủ.
+ *
+ * line-break: strict + word-break: normal giữ đúng luật xuống dòng của tiếng
+ * Nhật (kinsoku): không để dấu 。、 hay ký tự nhỏ ゃゅょっ đứng đầu dòng.
+ */
+.jp {
+  font-family: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  line-break: strict;
+  word-break: normal;
+  font-feature-settings: 'palt' 0;
 }

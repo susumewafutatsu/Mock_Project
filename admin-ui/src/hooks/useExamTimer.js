@@ -5,7 +5,7 @@
 //
 // 1. Nguồn thời gian là server. Hook nhận `remainingSeconds` lấy từ response
 //    (start / session / autosave / heartbeat) và mỗi lần nhận là một lần chỉnh
-//    lại đồng hồ bằng `sync()`. Đồng hồ máy học sinh không tham gia vào việc
+//    lại đồng hồ bằng `sync()`. Đồng hồ máy thí sinh không tham gia vào việc
 //    tính còn bao nhiêu giờ, nên đổi giờ hệ thống cũng không xin thêm được phút.
 //
 // 2. Đếm bằng mốc neo, không trừ dần. Mỗi tick tính lại

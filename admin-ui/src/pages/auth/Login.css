@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #16171d 0%, #2a2d3e 100%);
+  background: linear-gradient(135deg, var(--paper) 0%, var(--line) 100%);
   position: relative;
   overflow: hidden;
   font-family: var(--sans);
@@ -14,7 +14,7 @@
   position: absolute;
   width: 150vw;
   height: 150vw;
-  background: radial-gradient(circle, rgba(170, 59, 255, 0.15) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(124, 92, 191, 0.15) 0%, transparent 60%);
   top: -50%;
   left: -25%;
   animation: pulse 15s ease-in-out infinite alternate;
@@ -26,15 +26,15 @@
 }
 
 .login-card {
-  background: rgba(31, 32, 40, 0.65);
+  background: rgba(255, 253, 247, 0.82);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(43, 38, 32, 0.11);
   border-radius: 24px;
   padding: 48px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 24px 40px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
   position: relative;
   z-index: 1;
   transform: translateY(20px);
@@ -57,13 +57,13 @@
 .login-header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
   margin: 0 0 8px 0;
   letter-spacing: -0.5px;
 }
 
 .login-header p {
-  color: #9ca3af;
+  color: var(--ink-mute);
   font-size: 15px;
   margin: 0;
 }
@@ -83,18 +83,18 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
+  color: var(--ink-mute);
   pointer-events: none;
   transition: color 0.2s;
 }
 
 .login-input {
   width: 100%;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--paper-deep);
+  border: 1px solid rgba(43, 38, 32, 0.07);
   border-radius: 12px;
   padding: 14px 16px 14px 48px;
-  color: #fff;
+  color: var(--ink-body);
   font-size: 15px;
   font-family: inherit;
   transition: all 0.2s ease;
@@ -103,20 +103,20 @@
 
 .login-input:focus {
   outline: none;
-  border-color: var(--accent);
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 0 4px rgba(170, 59, 255, 0.15);
+  border-color: var(--violet);
+  background: var(--paper-raised);
+  box-shadow: 0 0 0 4px rgba(124, 92, 191, 0.15);
 }
 
 .login-input:focus + .input-icon,
 .login-input:not(:placeholder-shown) + .input-icon {
-  color: var(--accent);
+  color: var(--violet);
 }
 
 .login-error {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fca5a5;
+  background: rgba(185, 58, 43, 0.12);
+  border: 1px solid rgba(185, 58, 43, 0.35);
+  color: var(--cinnabar-deep);
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 14px;
@@ -135,25 +135,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #9ca3af;
+  color: var(--ink-mute);
   cursor: pointer;
   user-select: none;
 }
 
 .forgot-password {
-  color: var(--accent);
+  color: var(--violet);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .forgot-password:hover {
-  color: #c084fc;
+  color: var(--violet);
 }
 
 .login-btn {
-  background: linear-gradient(135deg, var(--accent) 0%, #8b21ff 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--violet) 0%, var(--violet-dark) 100%);
+  color: var(--on-accent);
   border: none;
   border-radius: 12px;
   padding: 14px;
@@ -170,7 +170,7 @@
 
 .login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -6px rgba(170, 59, 255, 0.5);
+  box-shadow: 0 8px 20px -6px rgba(124, 92, 191, 0.5);
 }
 
 .login-btn:active {
@@ -182,7 +182,7 @@
   align-items: center;
   text-align: center;
   margin: 24px 0;
-  color: #6b7280;
+  color: var(--ink-mute);
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -192,7 +192,7 @@
 .divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(43, 38, 32, 0.07);
 }
 
 .divider:not(:empty)::before {
@@ -205,9 +205,9 @@
 
 .google-btn {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgba(43, 38, 32, 0.05);
+  border: 1px solid rgba(43, 38, 32, 0.07);
+  color: var(--ink-body);
   padding: 14px;
   border-radius: 12px;
   font-size: 15px;
@@ -221,18 +221,18 @@
 }
 
 .google-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(43, 38, 32, 0.07);
 }
 
 .register-prompt {
   text-align: center;
   margin-top: 32px;
-  color: #9ca3af;
+  color: var(--ink-mute);
   font-size: 14px;
 }
 
 .register-link {
-  color: var(--accent);
+  color: var(--violet);
   text-decoration: none;
   font-weight: 600;
   margin-left: 6px;
@@ -240,6 +240,93 @@
 }
 
 .register-link:hover {
-  color: #c084fc;
+  color: var(--violet);
   text-decoration: underline;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LỚP TIÊN HIỆP — CỔNG ĐĂNG NHẬP
+   ────────────────────────────────────────────────────────────────
+   Đây là màn hình đầu tiên người dùng thấy, nên nó phải nói ngay
+   đây là chỗ nào. Ba chi tiết làm việc đó: sương núi ở nền, nẹp
+   kim tuyến trên thẻ, và nút chính màu ngọc.
+
+   Nút đổi từ tím sang ngọc là một quyết định có lý do, không phải
+   đổi cho đẹp: tím là màu riêng của khu người ra đề (xem
+   TeacherDashboard.css). Trang đăng nhập dùng chung cho cả ba vai
+   trò, nên nó phải mang màu chủ của hệ thống — ngọc bích — chứ
+   không phải màu của một khu.
+   ════════════════════════════════════════════════════════════════ */
+
+.login-header h1 {
+  font-family: var(--heading);
+}
+
+/* ── Sương núi ──
+   Hai dải gradient hình vòng cung ở đáy màn hình, xếp lệch nhau, đọc
+   ra như hai lớp núi mờ sau màn sương. Toàn bộ bằng gradient nên
+   không tốn thêm một request ảnh nào.
+*/
+.login-container {
+  background:
+    radial-gradient(140% 70% at 50% 118%, rgba(47, 143, 111, 0.20), transparent 62%),
+    radial-gradient(110% 55% at 18% 112%, rgba(124, 92, 191, 0.16), transparent 58%),
+    radial-gradient(100% 50% at 88% 108%, rgba(201, 146, 46, 0.16), transparent 55%),
+    linear-gradient(170deg, var(--paper-raised) 0%, var(--paper) 55%, var(--paper-deep) 100%);
+}
+
+/* Vầng sáng xoay chậm ở bản gốc đổi sang tông kim — trên nền giấy,
+   quầng tím đọc ra như vết ố chứ không ra hào quang. */
+.login-container::before {
+  background: radial-gradient(circle, rgba(201, 146, 46, 0.16) 0%, transparent 60%);
+}
+
+/* ── Nẹp kim tuyến trên thẻ ── */
+.login-card {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--line-strong);
+}
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--jade), var(--gold), var(--jade), transparent);
+}
+
+/* ── Nút chính: ngọc bích ── */
+.login-btn {
+  background: linear-gradient(135deg, var(--jade) 0%, var(--jade-dark) 100%);
+}
+.login-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(47, 143, 111, 0.3);
+}
+
+.login-input:focus {
+  border-color: var(--jade);
+  box-shadow: 0 0 0 4px rgba(47, 143, 111, 0.14);
+}
+.input-group:focus-within .input-icon { color: var(--jade); }
+
+.google-btn:hover { border-color: var(--line-strong); background: var(--paper); }
+
+/* Liên kết phụ cũng theo màu chủ của trang. Để tím ở đây thì trang
+   đăng nhập có hai màu nhấn chọi nhau mà không mang thêm nghĩa gì. */
+.forgot-password,
+.forgot-password:hover,
+.signup-link a,
+.register-link,
+.login-footer a {
+  color: var(--jade-deep);
+}
+
+/* Sương núi dâng cao hơn: ở bản trước các dải nằm quá thấp (108–148%
+   chiều cao) nên trên màn hình thấp chúng rơi hết ra ngoài khung. */
+.login-container {
+  background:
+    radial-gradient(120% 46% at 50% 104%, rgba(47, 143, 111, 0.24), transparent 66%),
+    radial-gradient(95% 38% at 16% 100%, rgba(29, 92, 71, 0.20), transparent 62%),
+    radial-gradient(88% 34% at 86% 98%, rgba(201, 146, 46, 0.20), transparent 60%),
+    linear-gradient(170deg, var(--paper-raised) 0%, var(--paper) 58%, var(--paper-deep) 100%);
 }
