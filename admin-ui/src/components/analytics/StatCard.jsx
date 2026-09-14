@@ -1,6 +1,5 @@
 // src/components/analytics/StatCard.jsx
-// TODO: Simple stat card showing a metric with label and icon
-// Props: label (string), value (string|number), icon (ReactNode), color (string)
+// TODO: Simple stat card showing a metric with label and icon Props.
 
 const StatCard = ({ label, value, icon, color = '#4A90D9' }) => {
   return (

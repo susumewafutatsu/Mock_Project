@@ -1,8 +1,5 @@
 // src/components/exam/ExamTimer.jsx
-// TODO: Countdown timer display for exam room
-// Props: durationSeconds (number), onExpire (fn)
-// - Show MM:SS format, change color to red when < 5 minutes
-// - Use useExamTimer hook
+// TODO: Countdown timer display for exam room Props.
 
 import { useExamTimer } from '../../hooks/useExamTimer';
 

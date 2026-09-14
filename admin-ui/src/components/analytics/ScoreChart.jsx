@@ -1,7 +1,5 @@
 // src/components/analytics/ScoreChart.jsx
-// TODO: Score distribution bar chart or line chart
-// Props: data (array of { label, score }), type ('bar' | 'line')
-// Recommended library: recharts or chart.js
+// TODO: Score distribution bar chart or line chart Props.
 
 const ScoreChart = ({ data, type = 'bar' }) => {
   // TODO: Install recharts: npm install recharts

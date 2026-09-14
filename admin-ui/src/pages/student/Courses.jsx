@@ -1,25 +1,11 @@
 // src/pages/student/Courses.jsx
-// Khoá học của thí sinh — nơi đọc NGỮ PHÁP và CHỮ HÁN.
-//
-// Ba màn hình trong một file vì chúng là ba bước của cùng một việc:
-//   danh sách khoá → danh sách bài → đọc một bài.
-//
-// Ba quy ước:
-//
-// 1. Server tính phần trăm, client chỉ hiển thị. Hai bên chia riêng là hai chỗ
-//    có thể chia cho 0 và hai cách làm tròn khác nhau.
-//
-// 2. Nội dung bài là VĂN BẢN THUẦN, render bằng CSS `white-space: pre-wrap`
-//    chứ KHÔNG dựng HTML từ chuỗi. Nội dung do người ra đề nhập; đổ nó vào
-//    dangerouslySetInnerHTML là mở đường cho XSS lên mọi thí sinh đọc bài đó.
-//
-// 3. Bấm "Đã học xong" là đủ để tính tiến độ — không kiểm tra người học có
-//    thật sự đọc hết hay không. Đây là công cụ tự theo dõi, không phải bài thi.
+// LỘ TRÌNH ÔN TẬP của thí sinh (tên file giữ nguyên để không phải đổi route).
 
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, BookOpen, Check, CheckCircle2, ChevronLeft, ChevronRight,
-  Clock, GraduationCap, Layers, Loader2, PlayCircle,
+  ArrowLeft, Check, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck,
+  Clock, GraduationCap, Layers, Loader2, Lock, PlayCircle, Route,
 } from 'lucide-react';
 import courseService from '../../services/courseService';
 import { LESSON_TYPE } from '../../utils/constants';
@@ -31,7 +17,7 @@ function ProgressBar({ percent, done, total }) {
     <div className="st-progress-row">
       <div className="st-progress"
            role="img"
-           aria-label={`Đã học ${done} trên ${total} bài`}>
+           aria-label={`Đã qua ${done} trên ${total} chặng`}>
         <div className="st-progress-mature" style={{ width: `${percent}%` }} />
       </div>
       <span>{percent}%</span>
@@ -39,9 +25,32 @@ function ProgressBar({ percent, done, total }) {
   );
 }
 
-// ─── Đọc một bài ─────────────────────────────────────────────────
+/** Ô "bài kiểm tra của chặng": ngưỡng cần đạt, điểm tốt nhất, nút vào làm. */
+function StageCheck({ examId, examTitle, minScorePercent, bestScorePercent, passed, compact }) {
+  const navigate = useNavigate();
+  return (
+    <div className={`st-stage-check ${passed ? 'passed' : ''} ${compact ? 'compact' : ''}`}>
+      <ClipboardCheck size={16} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong>Bài kiểm tra chặng: {examTitle}</strong>
+        <p>
+          Cần đạt từ <b>{minScorePercent}%</b> để qua chặng ·{' '}
+          {bestScorePercent == null
+            ? 'bạn chưa làm bài này'
+            : <>điểm tốt nhất của bạn: <b>{Math.round(bestScorePercent)}%</b>{passed ? ' — đã đạt' : ''}</>}
+        </p>
+      </div>
+      <button type="button" className={`st-btn ${passed ? '' : 'primary'}`}
+              onClick={() => navigate(`/student/exams/${examId}/room`)}>
+        <PlayCircle size={14} /> {bestScorePercent == null ? 'Làm bài kiểm tra' : 'Làm lại'}
+      </button>
+    </div>
+  );
+}
 
-function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) {
+// ─── Một chặng ───────────────────────────────────────────────────
+
+function StageReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,12 +73,12 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
       const course = await courseService.completeLesson(courseId, lessonId);
       setLesson((prev) => prev && { ...prev, completed: true });
       onProgress?.(course);
-      // Đọc xong thì đi tiếp luôn. Bắt quay lại danh sách rồi bấm bài kế tiếp
-      // là thêm hai cú bấm cho việc mà ai cũng làm sau khi học xong một bài.
+      // Qua chặng thì đi tiếp luôn.
       if (lesson?.nextLessonId) {
         onOpenLesson(lesson.nextLessonId);
       }
     } catch (err) {
+      // Chưa đạt bài kiểm tra / chặng trước chưa qua: server nói rõ vì sao.
       setError(err.message);
     } finally {
       setSaving(false);
@@ -80,14 +89,24 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
     return (
       <div className="st-empty">
         <Loader2 size={22} className="st-spin" />
-        <p>Đang mở bài học…</p>
+        <p>Đang mở chặng…</p>
       </div>
     );
   }
-  if (error && !lesson) return <div className="st-error">{error}</div>;
+  if (error && !lesson) {
+    return (
+      <div className="st-wrap">
+        <button className="st-btn" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
+          <ArrowLeft size={14} /> Các chặng
+        </button>
+        <div className="st-error"><Lock size={13} style={{ verticalAlign: -2 }} /> {error}</div>
+      </div>
+    );
+  }
   if (!lesson) return null;
 
   const type = LESSON_TYPE[lesson.lessonType] ?? LESSON_TYPE.GRAMMAR;
+  const blockedByExam = lesson.examId != null && !lesson.examPassed;
 
   return (
     <div className="st-wrap">
@@ -99,35 +118,37 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
         <div className="st-lesson-head">
           <div className="st-lesson-meta">
             <span className={`st-lesson-type ${type.cls}`}>{type.label}</span>
-            <span>Bài {lesson.orderNo}</span>
+            <span>Chặng {lesson.orderNo}</span>
             {lesson.estimatedMinutes && (
               <><span>·</span><Clock size={12} /> <span>{lesson.estimatedMinutes} phút</span></>
             )}
             {lesson.completed && (
               <span style={{ marginLeft: 'auto', color: 'var(--jade)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <CheckCircle2 size={13} /> Đã học xong
+                <CheckCircle2 size={13} /> Đã qua chặng
               </span>
             )}
           </div>
-          {/* lang="ja" trên tiêu đề vì tên bài ngữ pháp gần như luôn có kana */}
+          {/* lang="ja" trên tiêu đề vì tên chặng ngữ pháp gần như luôn có kana */}
           <h2 className="jp" lang="ja">{lesson.title}</h2>
         </div>
 
-        {/* Văn bản thuần, xuống dòng giữ bằng CSS. Xem chú thích số 2 ở đầu file
-            về lý do không dùng dangerouslySetInnerHTML. */}
+        {/* Văn bản thuần, xuống dòng giữ bằng CSS. Xem quy ước số 2 ở đầu file. */}
         <div className="st-lesson-body jp" lang="ja">{lesson.content}</div>
 
-        {(lesson.deckId || lesson.examId) && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {lesson.deckId && (
-              <span className="st-tag streak">
-                <Layers size={11} style={{ verticalAlign: -1 }} /> Có bộ thẻ ôn: {lesson.deckName}
-              </span>
-            )}
-            {lesson.examId && (
-              <span className="st-tag type">Có bài kiểm tra: {lesson.examTitle}</span>
-            )}
+        {lesson.deckId && (
+          <div>
+            <Link className="st-btn" style={{ textDecoration: 'none', display: 'inline-flex' }}
+                  to={`/student/exams?tab=flashcards&deck=${lesson.deckId}`}>
+              <Layers size={14} /> Mở bộ thẻ của chặng: {lesson.deckName}
+            </Link>
           </div>
+        )}
+
+        {lesson.examId && (
+          <StageCheck examId={lesson.examId} examTitle={lesson.examTitle}
+                      minScorePercent={lesson.minScorePercent}
+                      bestScorePercent={lesson.bestScorePercent}
+                      passed={lesson.examPassed} />
         )}
 
         {error && <div className="st-error">{error}</div>}
@@ -138,7 +159,7 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
             disabled={!lesson.previousLessonId}
             onClick={() => onOpenLesson(lesson.previousLessonId)}
           >
-            <ChevronLeft size={14} /> Bài trước
+            <ChevronLeft size={14} /> Chặng trước
           </button>
 
           {lesson.completed ? (
@@ -147,12 +168,14 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
               disabled={!lesson.nextLessonId}
               onClick={() => onOpenLesson(lesson.nextLessonId)}
             >
-              {lesson.nextLessonId ? <>Bài tiếp <ChevronRight size={14} /></> : 'Đã hết bài'}
+              {lesson.nextLessonId ? <>Chặng tiếp <ChevronRight size={14} /></> : 'Đã đi hết lộ trình 🎉'}
             </button>
           ) : (
-            <button className="st-btn primary" disabled={saving} onClick={complete}>
+            <button className="st-btn primary" disabled={saving || blockedByExam} onClick={complete}
+                    title={blockedByExam ? `Đạt từ ${lesson.minScorePercent}% ở bài kiểm tra để qua chặng` : undefined}>
               {saving ? <><Loader2 size={14} className="st-spin" /> Đang lưu…</>
-                      : <><Check size={14} /> Đã học xong</>}
+                : blockedByExam ? <><Lock size={14} /> Đạt bài kiểm tra để qua chặng</>
+                : <><Check size={14} /> Qua chặng</>}
             </button>
           )}
         </div>
@@ -161,9 +184,9 @@ function LessonReader({ courseId, lessonId, onBack, onOpenLesson, onProgress }) 
   );
 }
 
-// ─── Danh sách bài của một khoá ──────────────────────────────────
+// ─── Các chặng của một lộ trình ──────────────────────────────────
 
-function CourseDetail({ courseId, onBack, onProgress }) {
+function PathDetail({ courseId, onBack, onProgress }) {
   const [detail, setDetail] = useState(null);
   const [openLesson, setOpenLesson] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -192,7 +215,7 @@ function CourseDetail({ courseId, onBack, onProgress }) {
 
   if (openLesson) {
     return (
-      <LessonReader
+      <StageReader
         courseId={courseId}
         lessonId={openLesson}
         onBack={() => { setOpenLesson(null); load(); onProgress?.(); }}
@@ -206,7 +229,7 @@ function CourseDetail({ courseId, onBack, onProgress }) {
     return (
       <div className="st-empty">
         <Loader2 size={22} className="st-spin" />
-        <p>Đang tải khoá học…</p>
+        <p>Đang tải lộ trình…</p>
       </div>
     );
   }
@@ -214,11 +237,13 @@ function CourseDetail({ courseId, onBack, onProgress }) {
   if (!detail) return null;
 
   const { course, lessons } = detail;
+  // Chặng đang ở = chặng đầu tiên chưa qua (và không khoá).
+  const currentId = lessons.find((l) => !l.completed && !l.locked)?.lessonId;
 
   return (
     <div className="st-wrap">
       <button className="st-btn" style={{ alignSelf: 'flex-start' }} onClick={onBack}>
-        <ArrowLeft size={14} /> Tất cả khoá học
+        <ArrowLeft size={14} /> Tất cả lộ trình
       </button>
 
       <div className="st-head">
@@ -228,10 +253,10 @@ function CourseDetail({ courseId, onBack, onProgress }) {
         </div>
         <div className="st-stats">
           <div className="st-stat done">
-            <b>{course.progressPercent}%</b><span>Hoàn thành</span>
+            <b>{course.progressPercent}%</b><span>Chặng đã qua</span>
           </div>
           <div className="st-stat">
-            <b>{course.totalLessons}</b><span>Bài học</span>
+            <b>{course.totalLessons}</b><span>Chặng</span>
           </div>
         </div>
       </div>
@@ -242,36 +267,50 @@ function CourseDetail({ courseId, onBack, onProgress }) {
 
       {!course.enrolled && (
         <button className="st-btn primary" style={{ alignSelf: 'flex-start' }} onClick={enroll}>
-          <PlayCircle size={14} /> Bắt đầu học khoá này
+          <PlayCircle size={14} /> Bắt đầu lộ trình này
         </button>
       )}
 
       {error && <div className="st-error">{error}</div>}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <ol className="st-path">
         {lessons.map((l) => {
           const type = LESSON_TYPE[l.lessonType] ?? LESSON_TYPE.GRAMMAR;
+          const state = l.completed ? 'done' : l.locked ? 'locked' : l.lessonId === currentId ? 'current' : 'open';
           return (
-            <button
-              key={l.lessonId}
-              className={`st-lesson-row ${l.completed ? 'done' : ''}`}
-              onClick={() => setOpenLesson(l.lessonId)}
-            >
-              <span className="st-lesson-no">
-                {l.completed ? <Check size={13} /> : l.orderNo}
-              </span>
-              <span className="jp" lang="ja" style={{ flex: 1, minWidth: 0 }}>{l.title}</span>
-              <span className={`st-lesson-type ${type.cls}`}>{type.label}</span>
-              {l.estimatedMinutes && (
-                <span style={{ fontSize: 11.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
-                  {l.estimatedMinutes}′
+            <li key={l.lessonId} className={`st-path-stage ${state}`}>
+              <button
+                type="button"
+                className="st-lesson-row"
+                disabled={l.locked}
+                title={l.locked ? 'Qua chặng trước để mở chặng này' : undefined}
+                onClick={() => setOpenLesson(l.lessonId)}
+              >
+                <span className="st-lesson-no">
+                  {l.completed ? <Check size={13} /> : l.locked ? <Lock size={12} /> : l.orderNo}
                 </span>
-              )}
-              <ChevronRight size={14} style={{ color: 'var(--ink-faint)', flexShrink: 0 }} />
-            </button>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="jp" lang="ja" style={{ display: 'block' }}>{l.title}</span>
+                  {l.hasExam && (
+                    <span className="st-path-check">
+                      <ClipboardCheck size={11} /> Kiểm tra: đạt từ {l.minScorePercent}%
+                      {l.bestScorePercent != null && ` · tốt nhất ${Math.round(l.bestScorePercent)}%`}
+                    </span>
+                  )}
+                </span>
+                {state === 'current' && <span className="st-path-here">Đang ở chặng này</span>}
+                <span className={`st-lesson-type ${type.cls}`}>{type.label}</span>
+                {l.estimatedMinutes && (
+                  <span style={{ fontSize: 11.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+                    {l.estimatedMinutes}′
+                  </span>
+                )}
+                {!l.locked && <ChevronRight size={14} style={{ color: 'var(--ink-faint)', flexShrink: 0 }} />}
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }
@@ -298,7 +337,7 @@ export default function Courses() {
 
   if (openCourse) {
     return (
-      <CourseDetail
+      <PathDetail
         courseId={openCourse}
         onBack={() => { setOpenCourse(null); load(); }}
         onProgress={load}
@@ -310,7 +349,7 @@ export default function Courses() {
     return (
       <div className="st-empty">
         <Loader2 size={22} className="st-spin" />
-        <p>Đang tải khoá học…</p>
+        <p>Đang tải lộ trình ôn tập…</p>
       </div>
     );
   }
@@ -330,15 +369,15 @@ export default function Courses() {
       )}
 
       <div className="st-deck-meta">
-        <BookOpen size={12} />
-        <span>{course.totalLessons} bài</span>
+        <Route size={12} />
+        <span>{course.totalLessons} chặng</span>
         {course.enrolled && (
           <><span>·</span><span style={{ color: 'var(--jade)' }}>
-            đã học {course.completedLessons}
+            đã qua {course.completedLessons}
           </span></>
         )}
         {course.levelName && (
-          <span style={{ marginLeft: 'auto', fontWeight: 700 }}>{course.levelName}</span>
+          <span style={{ marginLeft: 'auto', fontWeight: 700 }}>Hướng tới {course.levelName}</span>
         )}
       </div>
 
@@ -351,8 +390,8 @@ export default function Courses() {
         onClick={() => setOpenCourse(course.courseId)}
       >
         {course.progressPercent === 100 ? <><CheckCircle2 size={14} /> Xem lại</>
-          : course.enrolled ? <><PlayCircle size={14} /> Học tiếp</>
-          : <><PlayCircle size={14} /> Vào học</>}
+          : course.enrolled ? <><PlayCircle size={14} /> Ôn tiếp</>
+          : <><PlayCircle size={14} /> Xem lộ trình</>}
       </button>
     </div>
   );
@@ -361,20 +400,20 @@ export default function Courses() {
     <div className="st-wrap">
       <div className="st-head">
         <div>
-          <h2>Khoá học</h2>
+          <h2>Lộ trình ôn tập</h2>
           <p>
-            Ngữ pháp và chữ Hán học bằng cách đọc lý thuyết rồi đánh dấu hoàn thành —
-            không phải thứ nhét vừa một tấm thẻ lật. Bộ thẻ vẫn ở đó, nhưng để ÔN LẠI
-            từ vựng sau khi đã hiểu bài.
+            Mỗi lộ trình là một chuỗi chặng hướng tới một trình độ thi: đọc lý thuyết,
+            ôn bộ thẻ, rồi làm bài kiểm tra của chặng. Đạt thì chặng kế tiếp mới mở — đi hết
+            là bạn đã sẵn sàng cho phần đó của đề thi.
           </p>
         </div>
         <div className="st-stats">
           <div className="st-stat">
-            <b>{enrolled.length}</b><span>Đang học</span>
+            <b>{enrolled.length}</b><span>Đang theo</span>
           </div>
           <div className="st-stat done">
             <b>{enrolled.filter((c) => c.progressPercent === 100).length}</b>
-            <span>Đã xong</span>
+            <span>Đã đi hết</span>
           </div>
         </div>
       </div>
@@ -384,7 +423,7 @@ export default function Courses() {
       {enrolled.length > 0 && (
         <>
           <div className="st-head" style={{ marginBottom: -4 }}>
-            <h2 style={{ fontSize: 15 }}>Đang học</h2>
+            <h2 style={{ fontSize: 15 }}>Đang theo</h2>
           </div>
           <div className="st-decks">{enrolled.map(card)}</div>
         </>
@@ -392,20 +431,20 @@ export default function Courses() {
 
       <div className="st-head" style={{ marginTop: enrolled.length > 0 ? 8 : 0, marginBottom: -4 }}>
         <h2 style={{ fontSize: 15 }}>
-          {enrolled.length > 0 ? 'Khoá học khác' : 'Tất cả khoá học'}
+          {enrolled.length > 0 ? 'Lộ trình khác' : 'Tất cả lộ trình'}
         </h2>
       </div>
 
       {notStarted.length === 0 ? (
         <div className="st-empty">
-          <span className="st-empty-icon">📚</span>
+          <span className="st-empty-icon">🧭</span>
           <h3>
-            {enrolled.length > 0 ? 'Bạn đã vào hết các khoá hiện có' : 'Chưa có khoá học nào'}
+            {enrolled.length > 0 ? 'Bạn đã theo hết các lộ trình hiện có' : 'Chưa có lộ trình nào'}
           </h3>
           <p>
             {enrolled.length > 0
-              ? 'Người ra đề sẽ soạn thêm khoá mới, quay lại sau nhé.'
-              : 'Khoá học do người ra đề soạn và quản trị viên duyệt. Chưa có khoá nào được xuất bản.'}
+              ? 'Người ra đề sẽ soạn thêm lộ trình mới, quay lại sau nhé.'
+              : 'Lộ trình do người ra đề soạn và quản trị viên duyệt. Chưa có lộ trình nào được xuất bản.'}
           </p>
         </div>
       ) : (

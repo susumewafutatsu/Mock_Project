@@ -311,13 +311,9 @@
   to { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CHỌN ĐỀ: lọc theo trình độ, phân trang, mở đề của một lớp
-   ═══════════════════════════════════════════════════════════════ */
+/* CHỌN ĐỀ: lọc theo trình độ, phân trang, mở đề của một lớp */
 
-/* ─── Trạng thái chung của một danh sách ───
-   Bốn trạng thái (đang tải / lỗi / rỗng / có dữ liệu) dùng chung một khối,
-   để ba màn hình không trôi dần thành ba kiểu hiển thị khác nhau. */
+/* ─ Trạng thái chung của một danh sách Bốn trạng thái (đang tải / lỗi / rỗng / có dữ liệu) dùng chung một khối. */
 .sd-list-state {
   padding: 26px 22px;
   display: flex; align-items: center; gap: 10px;
@@ -430,9 +426,7 @@
 
 .sd-pager-gap { color: var(--ink-mute); font-size: 12.5px; padding: 0 2px; }
 
-/* ─── Thẻ lớp học bấm được ───
-   Thẻ lớp giờ là nút mở tới đề của lớp, nên phải reset lại kiểu mặc định của
-   <button> (căn giữa, font hệ thống) chứ không chỉ đổi con trỏ chuột. */
+/* ─ Thẻ lớp học bấm được Thẻ lớp giờ là nút mở tới đề của lớp. */
 .sd-class-card {
   padding: 20px 22px;
   display: flex; flex-direction: column; gap: 14px;
@@ -515,18 +509,7 @@
   .sd-spin { animation: none; }
 }
 
-/* ════════════════════════════════════════════════════════════════
-   LỚP TIÊN HIỆP
-   ────────────────────────────────────────────────────────────────
-   Phần trên là bố cục và bảng màu. Phần này chỉ thêm chất liệu:
-   nét khắc mộc ở tiêu đề, chỉ kim tuyến ở mép, dấu triện ở nhãn
-   trạng thái.
-
-   Nguyên tắc tự đặt ra khi viết phần này: chủ đề không được làm
-   khó việc đọc. Mọi hoa văn đều nằm ở viền, ở nền mờ, hoặc ở chỗ
-   trống — không cái nào đè lên chữ hay lên con số. Thí sinh vào
-   đây để xem mình sai câu nào, không phải để ngắm giao diện.
-   ════════════════════════════════════════════════════════════════ */
+/* LỚP TIÊN HIỆP */
 
 /* ── Tiêu đề khắc mộc ── */
 .sd-logo h2,
@@ -550,9 +533,7 @@
   border-bottom: 2px solid var(--gold);
 }
 
-/* ── Chỉ kim tuyến dọc mép sidebar ──
-   Một sợi mảnh chuyển từ ngọc sang kim rồi tan dần, gợi mép quyển
-   thư tịch đóng gáy. */
+/* Chỉ kim tuyến dọc mép sidebar Một sợi mảnh chuyển từ ngọc sang kim rồi tan dần. */
 .sd-sidebar::after {
   content: '';
   position: absolute;
@@ -583,10 +564,7 @@
   opacity: 0.45;
 }
 
-/* ── Bảng chào: vân mây ──
-   Hai lớp gradient hình vòng cung xếp chồng ở đáy khối, đọc ra như
-   dải mây dưới chân núi. Rẻ hơn ảnh nền và không kéo thêm request.
-*/
+/* Bảng chào: vân mây Hai lớp gradient hình vòng cung xếp chồng ở đáy khối, đọc ra như dải mây dưới chân núi. */
 .sd-welcome-banner {
   background:
     radial-gradient(120% 80% at 50% 130%, rgba(47, 143, 111, 0.16), transparent 60%),
@@ -601,12 +579,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ── Nhãn trạng thái kiểu dấu triện ──
-   Vuông bo nhẹ thay vì viên thuốc, có viền cùng màu chữ — đúng dáng
-   con dấu đóng lên góc văn thư. Viền cũng giải quyết một vấn đề
-   thật: nền nhạt 12% trên giấy gần như không thấy, chỉ còn chữ trôi
-   lơ lửng.
-*/
+/* Nhãn trạng thái kiểu dấu triện Vuông bo nhẹ thay vì viên thuốc, có viền cùng màu chữ. */
 .sd-badge {
   border-radius: 6px;
   padding: 3px 9px;
@@ -660,12 +633,7 @@
 }
 .sd-stat-value { font-family: var(--heading); }
 
-/* ── Sương núi trong bảng chào ──
-   Ba dải vòng cung xếp lệch nhau ở đáy khối, cao thấp khác nhau, đọc
-   ra như dãy núi mờ dần sau sương. Đây là chi tiết trang trí ĐẬM
-   nhất của cả giao diện, và nó được đặt ở đúng chỗ chịu được: khối
-   chào không chứa số liệu nào, không ai phải đọc gì trên nền nó.
-*/
+/* Sương núi trong bảng chào Ba dải vòng cung xếp lệch nhau ở đáy khối, cao thấp khác nhau. */
 .sd-welcome-banner::after {
   content: '';
   position: absolute;
@@ -679,3 +647,85 @@
 }
 /* Nội dung phải nổi lên trên lớp sương vừa thêm. */
 .sd-welcome-banner > * { position: relative; z-index: 1; }
+
+/* PHÒNG THI: dải báo pha + BẢNG XẾP HẠNG */
+
+/* Dải báo pha ở đầu trang phòng thi — trả lời "sao chưa làm bài được?". */
+.sd-room-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+}
+.sd-room-banner strong { display: block; font-size: 14px; color: var(--ink); }
+.sd-room-banner p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+.sd-room-banner svg { flex-shrink: 0; margin-top: 2px; }
+.sd-room-banner.waiting { background: var(--gold-wash); border-color: rgba(201, 146, 46, 0.3); }
+.sd-room-banner.waiting svg { color: var(--gold-deep); }
+.sd-room-banner.live { background: var(--jade-tint); border-color: rgba(47, 143, 111, 0.3); }
+.sd-room-banner.live svg { color: var(--jade); }
+.sd-room-banner.ended svg { color: var(--azure); }
+
+.sd-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-family: var(--heading);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+/* Trang Bảng xếp hạng: danh sách chọn bên trái, bảng bên phải. */
+.sd-rank-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.sd-rank-picker { padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.sd-rank-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 8px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.sd-rank-group:first-child { margin-top: 4px; }
+.sd-rank-none { margin: 0 8px 6px; font-size: 12.5px; color: var(--ink-faint); line-height: 1.5; }
+.sd-rank-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-body);
+  cursor: pointer;
+}
+.sd-rank-item span { font-size: 11.5px; font-weight: 400; color: var(--ink-mute); }
+.sd-rank-item:hover { background: rgba(43, 38, 32, 0.05); }
+.sd-rank-item.active { background: var(--jade-wash); color: var(--jade-deep); }
+
+@media (max-width: 900px) {
+  .sd-rank-layout { grid-template-columns: 1fr; }
+}
+
+/* Nhãn pha của phòng thi — chữ nói rõ trạng thái, màu chỉ để nhận nhanh. */
+.sd-tag.phase-waiting { background: var(--gold-wash); color: var(--gold-deep); }
+.sd-tag.phase-live    { background: var(--jade-wash); color: var(--jade-deep); }
+.sd-tag.phase-ended   { background: var(--azure-wash); color: var(--azure-deep); }

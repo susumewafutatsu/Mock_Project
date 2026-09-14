@@ -244,29 +244,13 @@
   text-decoration: underline;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   LỚP TIÊN HIỆP — CỔNG ĐĂNG NHẬP
-   ────────────────────────────────────────────────────────────────
-   Đây là màn hình đầu tiên người dùng thấy, nên nó phải nói ngay
-   đây là chỗ nào. Ba chi tiết làm việc đó: sương núi ở nền, nẹp
-   kim tuyến trên thẻ, và nút chính màu ngọc.
-
-   Nút đổi từ tím sang ngọc là một quyết định có lý do, không phải
-   đổi cho đẹp: tím là màu riêng của khu người ra đề (xem
-   TeacherDashboard.css). Trang đăng nhập dùng chung cho cả ba vai
-   trò, nên nó phải mang màu chủ của hệ thống — ngọc bích — chứ
-   không phải màu của một khu.
-   ════════════════════════════════════════════════════════════════ */
+/* LỚP TIÊN HIỆP — CỔNG ĐĂNG NHẬP */
 
 .login-header h1 {
   font-family: var(--heading);
 }
 
-/* ── Sương núi ──
-   Hai dải gradient hình vòng cung ở đáy màn hình, xếp lệch nhau, đọc
-   ra như hai lớp núi mờ sau màn sương. Toàn bộ bằng gradient nên
-   không tốn thêm một request ảnh nào.
-*/
+/* Sương núi Hai dải gradient hình vòng cung ở đáy màn hình, xếp lệch nhau. */
 .login-container {
   background:
     radial-gradient(140% 70% at 50% 118%, rgba(47, 143, 111, 0.20), transparent 62%),
@@ -311,8 +295,7 @@
 
 .google-btn:hover { border-color: var(--line-strong); background: var(--paper); }
 
-/* Liên kết phụ cũng theo màu chủ của trang. Để tím ở đây thì trang
-   đăng nhập có hai màu nhấn chọi nhau mà không mang thêm nghĩa gì. */
+/* Liên kết phụ cũng theo màu chủ của trang. */
 .forgot-password,
 .forgot-password:hover,
 .signup-link a,
@@ -321,12 +304,23 @@
   color: var(--jade-deep);
 }
 
-/* Sương núi dâng cao hơn: ở bản trước các dải nằm quá thấp (108–148%
-   chiều cao) nên trên màn hình thấp chúng rơi hết ra ngoài khung. */
+/* Sương núi dâng cao hơn: ở bản trước các dải nằm quá thấp (108–148% chiều cao) nên trên màn hình thấp chúng rơi hết ra ngoài khung. */
 .login-container {
   background:
     radial-gradient(120% 46% at 50% 104%, rgba(47, 143, 111, 0.24), transparent 66%),
     radial-gradient(95% 38% at 16% 100%, rgba(29, 92, 71, 0.20), transparent 62%),
     radial-gradient(88% 34% at 86% 98%, rgba(201, 146, 46, 0.20), transparent 60%),
     linear-gradient(170deg, var(--paper-raised) 0%, var(--paper) 58%, var(--paper-deep) 100%);
+}
+
+/* Lời nhắn trung tính (vd. vừa đăng ký xong) — khác hẳn .login-error về màu. */
+.login-notice {
+  background: rgba(47, 143, 111, 0.1);
+  color: #1d5c47;
+  border: 1px solid rgba(47, 143, 111, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 12px;
 }

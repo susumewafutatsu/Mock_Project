@@ -1,31 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Noto+Serif:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
-/* src/index.css — nền tảng giao diện toàn ứng dụng.
- *
- * ── Vì sao tông "tu tiên" nền sáng ───────────────────────────────────────
- *
- * Bản trước dùng nền slate gần đen. Nền tối hợp với công cụ người ta mở cả
- * ngày (IDE, dashboard giám sát), nhưng đây là chỗ thí sinh ĐỌC: đọc đề, đọc
- * lời giải, đọc lại bài mình đã làm. Chữ sáng trên nền tối làm mắt mỏi nhanh
- * hơn khi phải đọc đoạn dài, và quan trọng hơn là nó không gợi ra không khí
- * học hành — nó gợi ra phòng máy chủ.
- *
- * Bảng màu ở đây lấy từ tranh thuỷ mặc và bối cảnh tiên hiệp: giấy tuyên làm
- * nền, mực nho làm chữ, ngọc bích cho cái đúng, chu sa cho cái sai, kim sắc
- * cho cái đáng chú ý. Nó sáng và ấm như trang sách, nhưng vẫn có một bản sắc
- * riêng thay vì trắng trơn.
- *
- * ── Quy ước dùng token ──────────────────────────────────────────────────
- *
- * Mọi màu trong ứng dụng phải lấy từ các biến dưới đây. Đừng viết mã hex
- * thẳng vào component: bảng màu này còn đổi, và mỗi hex rải rác là một chỗ sẽ
- * bị bỏ sót.
- *
- * Ba màu ngữ nghĩa có ý nghĩa CỐ ĐỊNH, không được mượn để trang trí:
- *   --jade     = đúng / đạt / hoàn thành
- *   --cinnabar = sai / lỗi / nguy hiểm
- *   --gold     = cần chú ý / đang chờ / sắp hết hạn
- */
+/* src/index.css — nền tảng giao diện toàn ứng dụng. */
 
 :root {
   /* ── Giấy: nền, từ sâu nhất tới nổi nhất ── */
@@ -80,12 +55,7 @@
   --shadow: 0 4px 14px rgba(90, 74, 48, 0.08);
   --shadow-lg: 0 12px 32px rgba(90, 74, 48, 0.12);
 
-  /* ── Chữ ──
-   * Noto Serif cho tiêu đề: có dấu tiếng Việt đầy đủ, và nét chân của nó gợi
-   * bản khắc gỗ — đúng chất tiên hiệp mà vẫn đọc tốt. Be Vietnam Pro cho nội
-   * dung vì nó được thiết kế riêng cho dấu tiếng Việt, không bị chồng dấu ở
-   * cỡ nhỏ như các font sans quốc tế.
-   */
+  /* Chữ Noto Serif cho tiêu đề: có dấu tiếng Việt đầy đủ, và nét chân của nó gợi bản khắc gỗ. */
   --sans: 'Be Vietnam Pro', system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: 'Noto Serif', Georgia, 'Times New Roman', serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -106,18 +76,12 @@ body {
   color: var(--ink-body);
 }
 
-/* Ứng dụng tự lo bố cục của mình. Bản scaffold của Vite ép #root rộng 1126px,
-   canh giữa, có viền hai bên — đúng cho một trang giới thiệu, nhưng nó cắt cụt
-   mọi dashboard toàn màn hình bên trong. */
+/* Ứng dụng tự lo bố cục của mình. */
 #root {
   min-height: 100svh;
 }
 
-/* ── Nền giấy tuyên ──
- * Ba lớp gradient rất nhạt chồng lên nhau, để mặt giấy không phẳng lì một màu.
- * Cố tình giữ độ tương phản cực thấp (dưới 3%): đây là chất liệu, không phải
- * hoa văn — thấy rõ được nó là đã quá tay và bắt đầu chọi với nội dung.
- */
+/* Nền giấy tuyên Ba lớp gradient rất nhạt chồng lên nhau, để mặt giấy không phẳng lì một màu. */
 body::before {
   content: '';
   position: fixed;
@@ -147,10 +111,7 @@ code {
   color: var(--ink);
 }
 
-/* ── Thanh cuộn ──
- * Mảnh và cùng tông giấy. Thanh cuộn mặc định của Windows là một dải xám lạnh
- * chạy dọc mép mọi danh sách — đủ để phá tông ấm của cả trang.
- */
+/* Thanh cuộn Mảnh và cùng tông giấy. */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
@@ -165,26 +126,13 @@ code {
 }
 *::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); background-clip: content-box; }
 
-/* Vòng focus dùng chung — bàn phím phải đi được khắp nơi, và vòng focus mặc
-   định của trình duyệt gần như tàng hình trên nền giấy. */
+/* Vòng focus dùng chung — bàn phím phải đi được khắp nơi. */
 :focus-visible {
   outline: 2px solid var(--jade);
   outline-offset: 2px;
 }
 
-/* ── Chữ Nhật ───────────────────────────────────────────────────────────
- *
- * Be Vietnam Pro không có glyph tiếng Nhật, nên chữ kana/kanji rơi xuống font
- * hệ thống — trên Windows đó thường là một font Trung, và chữ Hán Nhật với
- * chữ Hán Trung có nhiều chữ khác hẳn tự dạng (直, 骨, 今). Người học sẽ học
- * thuộc một mặt chữ sai mà không hề biết.
- *
- * Luôn dùng kèm lang="ja" trên phần tử: trình duyệt cần biết ngôn ngữ mới
- * chọn đúng glyph, chỉ đặt font-family là chưa đủ.
- *
- * line-break: strict + word-break: normal giữ đúng luật xuống dòng của tiếng
- * Nhật (kinsoku): không để dấu 。、 hay ký tự nhỏ ゃゅょっ đứng đầu dòng.
- */
+/* Chữ Nhật */
 .jp {
   font-family: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
   line-break: strict;

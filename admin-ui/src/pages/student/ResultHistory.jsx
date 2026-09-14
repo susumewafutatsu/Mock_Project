@@ -1,15 +1,5 @@
 // src/pages/student/ResultHistory.jsx
-//
 // Lịch sử làm bài của thí sinh, nhóm theo ĐỀ chứ không phải theo lượt.
-//
-// Từ khi một đề có thể làm nhiều lượt, một danh sách phẳng đọc rất khó: bốn
-// dòng cùng tên "Từ vựng N4 – Tuần 8" nằm rải giữa các đề khác, không nhìn ra
-// được điểm đang lên hay xuống. Nhóm lại thì mỗi đề chỉ chiếm một khối, và câu
-// hỏi thật sự của thí sinh — "mình đã khá hơn chưa" — trả lời được ngay bằng
-// điểm cao nhất so với điểm lần gần nhất.
-//
-// Trang này không tự gọi đáp án: nó chỉ liệt kê. Đáp án + giải thích nằm ở
-// SubmissionReview, mở bằng nút "Xem lại" của từng lượt.
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -33,13 +23,7 @@ function formatScore(value) {
   return String(Number(value));
 }
 
-/**
- * Gom các lượt làm theo đề, giữ nguyên thứ tự server đã sắp (mới nhất trước).
- *
- * Mỗi nhóm mang sẵn hai con số mà phần render cần: điểm cao nhất từ trước tới
- * giờ, và điểm của lượt gần nhất. Tính ở đây một lần thay vì tính lại trong JSX
- * mỗi lần component vẽ lại.
- */
+/** Gom các lượt làm theo đề, giữ nguyên thứ tự server đã sắp (mới nhất trước). */
 function groupByExam(results) {
   const groups = new Map();
   for (const row of results) {
@@ -159,10 +143,7 @@ function ExamGroup({ group, onReview }) {
   );
 }
 
-/**
- * Dùng được ở hai chỗ: làm nội dung tab "Lịch sử điểm" trong trang thí sinh, và
- * làm một trang độc lập. Nên nó không tự vẽ sidebar hay tiêu đề trang.
- */
+/** Dùng được ở hai chỗ: làm nội dung tab "Lịch sử điểm" trong trang thí sinh, và làm một trang độc lập. */
 export default function ResultHistory() {
   const navigate = useNavigate();
   const [results, setResults] = useState([]);

@@ -6,45 +6,67 @@ import {
   Compass, ArrowLeft, Eye, RotateCcw, BookMarked, Layers, KeyRound, DoorOpen,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { getExamBoard, getRoomExams, getPracticeExams } from '../../services/examService';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import Bookmarks from './Bookmarks';
+import SearchBox from '../../components/common/SearchBox';
+import NotificationBell from '../../components/common/NotificationBell';
+import InsightsCard from '../../components/study/InsightsCard';
+import {
+  getExamBoard,
+  getRoomExams,
+  getPracticeExams,
+  pushLeftoverDrafts,
+  getStudentResults,
+} from '../../services/examService';
 import roomService from '../../services/roomService';
+import courseService from '../../services/courseService';
 import ResultHistory from './ResultHistory';
 import MistakeBook from './MistakeBook';
 import Flashcards from './Flashcards';
 import Courses from './Courses';
 import { getStudyStats } from '../../services/studyService';
+import Leaderboard from '../../components/leaderboard/Leaderboard';
+import Rankings from './Rankings';
+import StudentRooms from './StudentRooms';
 import './StudentDashboard.css';
 
-// ─── Trạng thái đề thi ─────────────────────────────────────────
-// Server đã tính sẵn `availability` cho từng đề (xem ExamResponse.Availability),
-// client chỉ tra bảng này chứ không tự so lại startTime/endTime — hai bên so giờ
-// riêng là cách chắc chắn nhất để lệch nhau.
+// ─ Trạng thái đề thi Server đã tính sẵn `availability` cho từng đề (xem ExamResponse.Availability)
 const AVAILABILITY = {
   OPEN:         { label: 'Đang mở',      cls: 'open',     action: 'Làm bài',      enter: true },
   IN_PROGRESS:  { label: 'Đang làm dở',  cls: 'open',     action: 'Tiếp tục',     enter: true },
-  UPCOMING:     { label: 'Sắp diễn ra',  cls: 'upcoming', action: 'Chưa mở',      enter: false },
-  // Đã nộp nhưng còn lượt: vào phòng thi lần nữa là mở lượt mới, không phải
-  // "vào lại" — server tự quyết định điều đó, client vẫn gọi đúng /start.
+  UPCOMING:     { label: 'Sắp mở',       cls: 'upcoming', action: 'Chưa mở',      enter: false },
+  // Đã nộp nhưng còn lượt: vào phòng thi lần nữa là mở lượt mới, không phải "vào lại"
   RETAKEABLE:   { label: 'Làm lại được', cls: 'open',     action: 'Làm lại',      enter: true },
   SUBMITTED:    { label: 'Đã làm',       cls: 'done',     action: 'Đã nộp',       enter: false },
-  CLOSED:       { label: 'Đã hết hạn',   cls: 'missed',   action: 'Đã đóng',      enter: false },
+  CLOSED:       { label: 'Đã đóng',      cls: 'missed',   action: 'Đã đóng',      enter: false },
   NO_QUESTIONS: { label: 'Chưa có câu hỏi', cls: 'missed', action: 'Chưa có câu', enter: false },
+  // Đã vào phòng, phòng còn ở sảnh chờ: người ra đề chưa bấm "Bắt đầu làm bài" và chưa tới giờ hẹn.
+  WAITING_ROOM: { label: 'Chờ bắt đầu',  cls: 'upcoming', action: 'Chờ bắt đầu',  enter: false },
 };
 
-/**
- * "Lần 2/3", "Đã làm 4 lần" — mô tả tình trạng lượt của thí sinh trên một đề.
- *
- * Trả về null khi chưa làm lần nào VÀ đề không giới hạn: lúc đó không có gì
- * đáng nói, thêm chữ chỉ làm rối thẻ đề.
- */
+/** Dòng thời gian của một đề trong phòng — nói theo pha của phòng, không theo đề. */
+function roomTimeLabel(exam) {
+  switch (exam.roomPhase) {
+    case 'WAITING':
+      return exam.roomStartTime
+        ? `Bắt đầu lúc ${formatDeadline(exam.roomStartTime)}`
+        : 'Chờ người ra đề bấm bắt đầu';
+    case 'IN_PROGRESS':
+      return `Hết giờ lúc ${formatDeadline(exam.roomEndTime)}`;
+    case 'ENDED':
+      return 'Phòng đã kết thúc';
+    default:
+      return `Hạn: ${formatDeadline(exam.endTime)}`;
+  }
+}
+
+/** "Lần 2/3", "Đã làm 4 lần" — mô tả tình trạng lượt của thí sinh trên một đề. */
 function attemptLabel(exam) {
   const used = exam.attemptsUsed ?? 0;
   if (exam.maxAttempts == null) {
     return used === 0 ? null : `Đã làm ${used} lần`;
   }
-  // `used` đã tính cả lượt đang làm dở, nên khi đang thi thì chính nó là số thứ
-  // tự của lượt hiện tại — "Lượt 2/3" chứ không phải "đã dùng 2/3".
+  // `used` đã tính cả lượt đang làm dở, nên khi đang thi thì chính nó là số thứ tự của lượt hiện tại.
   if (exam.availability === 'IN_PROGRESS') {
     return `Lượt ${used}/${exam.maxAttempts}`;
   }
@@ -55,9 +77,7 @@ function attemptLabel(exam) {
 }
 
 const SUBJECT_ICON = {
-  'Toán học': { icon: '📐', bg: 'rgba(124, 92, 191,0.15)' },
   'Tiếng Nhật': { icon: '🇯🇵', bg: 'rgba(201, 146, 46,0.15)' },
-  'Tiếng Anh': { icon: '📖', bg: 'rgba(61, 126, 166,0.15)' },
 };
 const DEFAULT_ICON = { icon: '📝', bg: 'rgba(47, 143, 111,0.15)' };
 
@@ -72,34 +92,39 @@ function formatDeadline(value) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// Đề thi lấy thật từ API. Các panel điểm / xếp hạng bên dưới vẫn là mock vì
-// endpoint tương ứng chưa có.
-const MOCK_RESULTS = [
-  { id: 1, name: 'Từ vựng N4 – Tuần 8',        subject: 'Tiếng Nhật', score: 90, total: 100, date: '22/08', grade: 'A' },
-  { id: 2, name: 'Toán – Bất phương trình bậc 2', subject: 'Toán học',   score: 76, total: 100, date: '18/08', grade: 'B' },
-  { id: 3, name: 'Reading – Practice Test 3',    subject: 'Tiếng Anh', score: 82, total: 100, date: '14/08', grade: 'B+' },
-  { id: 4, name: 'Hán tự N4 – Bộ 1',            subject: 'Tiếng Nhật', score: 95, total: 100, date: '10/08', grade: 'A' },
-];
+/** Hạng chữ từ phần trăm điểm. */
+function gradeOf(percent) {
+  if (percent == null) return '—';
+  if (percent >= 90) return 'A';
+  if (percent >= 80) return 'B+';
+  if (percent >= 65) return 'B';
+  if (percent >= 50) return 'C';
+  return 'F';
+}
+
+/** Phần trăm điểm của một bài đã nộp; null khi đề chưa có thang điểm. */
+function percentOf(result) {
+  const max = Number(result.maxScore);
+  if (!max) return null;
+  return Math.round((Number(result.totalScore) / max) * 100);
+}
 
 // Hai nhóm chức năng tách biệt: HỌC và THI.
-//
-// Xếp phần học lên trên phần thi là có chủ đích. Người dùng mở app này gần như
-// mỗi ngày để ôn, còn thi thì thỉnh thoảng mới có — đặt thứ dùng hằng ngày
-// xuống dưới cùng là bắt họ lướt qua những thứ hôm nay không dùng tới.
 const NAV_GROUPS = [
   {
     label: 'Học mỗi ngày',
     items: [
-      { id: 'courses',    label: 'Khoá học',      icon: GraduationCap },
+      { id: 'courses',    label: 'Lộ trình ôn tập', icon: GraduationCap },
       { id: 'flashcards', label: 'Thẻ ghi nhớ',    icon: Layers },
       { id: 'mistakes',   label: 'Sổ tay câu sai', icon: BookMarked },
+      { id: 'bookmarks',  label: 'Câu đã đánh dấu', icon: Star },
     ],
   },
   {
     label: 'Thi cử',
     items: [
       { id: 'home',     label: 'Tổng quan',       icon: LayoutDashboard },
-      { id: 'exams',    label: 'Đề thi của tôi',  icon: ClipboardList },
+      { id: 'exams',    label: 'Bài được giao',   icon: ClipboardList },
       { id: 'practice', label: 'Đề tự do',        icon: Compass },
       { id: 'rooms',    label: 'Phòng thi của tôi', icon: School },
       { id: 'history',  label: 'Lịch sử điểm',    icon: BarChart2 },
@@ -107,6 +132,9 @@ const NAV_GROUPS = [
     ],
   },
 ];
+
+// Màu cho thanh tiến độ lộ trình.
+const PATH_COLORS = ["var(--gold)", "var(--violet)", "var(--azure)", "var(--jade)"];
 
 const GRADE_COLOR = {
   'A':  { bg: 'rgba(47, 143, 111,0.12)',   fg: 'var(--jade)' },
@@ -121,10 +149,7 @@ function StatusBadge({ availability }) {
   return <span className={`sd-badge ${s.cls}`}>{s.label}</span>;
 }
 
-// ─── Trạng thái chung của một danh sách ────────────────────────
-// Ba màn hình đều tải bất đồng bộ và đều có bốn trạng thái giống nhau
-// (đang tải / lỗi / rỗng / có dữ liệu). Gom vào một chỗ để chúng không
-// trôi dần thành ba cách hiển thị khác nhau.
+// ─ Trạng thái chung của một danh sách Ba màn hình đều tải bất đồng bộ và đều có bốn trạng thái giống nhau (đang tải / lỗi / rỗng / có dữ liệu).
 function ListState({ loading, error, empty, emptyIcon: EmptyIcon = CheckCircle, emptyText }) {
   if (loading) return (
     <div className="sd-list-state">
@@ -144,16 +169,13 @@ function ListState({ loading, error, empty, emptyIcon: EmptyIcon = CheckCircle, 
   return null;
 }
 
-// ─── Một dòng đề thi ───────────────────────────────────────────
-// Dùng ở cả ba màn hình (trang chủ, đề của lớp, đề tự do) nên phải là một
-// component thật, không phải JSX chép lại ba lần.
-function ExamRow({ exam, onEnter }) {
+// ─ Một dòng đề thi Dùng ở cả ba màn hình (trang chủ, đề của lớp, đề tự do) nên phải là một component thật.
+function ExamRow({ exam, onEnter, onRanking }) {
   const av = AVAILABILITY[exam.availability] || AVAILABILITY.SUBMITTED;
   const look = SUBJECT_ICON[exam.subjectName] || DEFAULT_ICON;
   const navigate = useNavigate();
   const attempts = attemptLabel(exam);
   // Có bài đã nộp thì luôn xem lại được, kể cả khi đề đã đóng hoặc hết lượt.
-  // Xem lại bài của chính mình không phụ thuộc vào việc còn được thi hay không.
   const reviewable = exam.submissionId != null && exam.availability !== 'IN_PROGRESS';
 
   return (
@@ -168,18 +190,14 @@ function ExamRow({ exam, onEnter }) {
           <span><Clock size={11} />{exam.durationMinutes} phút</span>
           <span style={{ color: 'var(--ink-mute)' }}>{exam.totalQuestions} câu</span>
           {exam.levelName && <span style={{ color: 'var(--ink-mute)' }}>{exam.levelName}</span>}
-          {exam.teacherName && <span style={{ color: 'var(--ink-mute)' }}>GV: {exam.teacherName}</span>}
-          {/* Chỉ hiện tên lớp khi đề đến từ lớp. Đề tự do không thuộc lớp nào,
-              và server nói thẳng điều đó qua `source` thay vì để client đoán. */}
-          {exam.source === 'CLASS' && exam.className && (
-            <span style={{ color: 'var(--ink-mute)' }}>{exam.className}</span>
-          )}
+          {exam.teacherName && <span style={{ color: 'var(--ink-mute)' }}>Người ra đề: {exam.teacherName}</span>}
         </div>
         <div style={{ marginTop: 8 }}>
           <StatusBadge availability={exam.availability} />
-          {exam.source === 'CLASS' ? (
+          {/* Server nói thẳng đề đến từ đâu qua `source` thay vì để client đoán. */}
+          {exam.source === 'ROOM' ? (
             <span style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginLeft: 10 }}>
-              Hạn: {formatDeadline(exam.endTime)}
+              {roomTimeLabel(exam)}
             </span>
           ) : (
             <span style={{ fontSize: 11.5, color: 'var(--ink-mute)', marginLeft: 10 }}>
@@ -201,6 +219,12 @@ function ExamRow({ exam, onEnter }) {
         </div>
       </div>
       <div className="sd-exam-action">
+        {/* Đề tự do đã làm: xem mình đứng đâu so với những người đã làm đề này. */}
+        {onRanking && exam.source === 'PRACTICE' && reviewable && (
+          <button className="sd-btn-ghost" onClick={() => onRanking(exam)}>
+            <Trophy size={13} /> Xếp hạng
+          </button>
+        )}
         {reviewable && (
           <button
             className="sd-btn-ghost"
@@ -214,8 +238,7 @@ function ExamRow({ exam, onEnter }) {
             <Play size={13} /> {av.action}
           </button>
         ) : (
-          // Đã có nút "Xem lại bài" thì thôi nút xám vô dụng bên cạnh: nó chỉ
-          // lặp lại thông tin mà tấm badge trạng thái ở trên đã nói.
+          // Đã có nút "Xem lại bài" thì thôi nút xám vô dụng bên cạnh.
           !reviewable && (
             <button className="sd-btn-ghost" disabled>
               <Clock size={13} /> {av.action}
@@ -231,8 +254,7 @@ function ExamRow({ exam, onEnter }) {
 function Pager({ page, totalPages, totalElements, onChange }) {
   if (totalPages <= 1) return null;
 
-  // Cửa sổ tối đa 5 số quanh trang hiện tại — danh sách đề có thể lên tới hàng
-  // chục trang, in hết số ra thì thanh phân trang dài hơn cả nội dung.
+  // Cửa sổ tối đa 5 số quanh trang hiện tại.
   const windowSize = 5;
   let from = Math.max(0, page - Math.floor(windowSize / 2));
   const to = Math.min(totalPages, from + windowSize);
@@ -284,10 +306,8 @@ function Pager({ page, totalPages, totalElements, onChange }) {
 }
 
 // ─── Đề tự do: chọn trình độ rồi duyệt theo trang ──────────────
-function PracticeExams({ onEnter }) {
+function PracticeExams({ onEnter, onRanking }) {
   // undefined = chưa chọn gì, để server tự chọn trình độ theo lớp đang học.
-  // null      = thí sinh chủ động bấm "Tất cả trình độ".
-  // số        = một trình độ cụ thể.
   const [levelId, setLevelId] = useState(undefined);
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
@@ -308,9 +328,7 @@ function PracticeExams({ onEnter }) {
       .then((res) => {
         if (!alive) return;
         setData(res);
-        // Lần đầu vào trang, server chọn hộ một trình độ. Ghi lại lựa chọn đó
-        // để thanh chip sáng đúng ô, và để lần bấm chuyển trang sau không bị
-        // server chọn lại từ đầu.
+        // Lần đầu vào trang, server chọn hộ một trình độ.
         if (levelId === undefined && res.filteredByEnrolledLevels) {
           setLevelId(res.appliedLevelId);
         }
@@ -385,7 +403,7 @@ function PracticeExams({ onEnter }) {
             emptyText="Không có đề luyện tập nào ở trình độ này."
           />
           {!loading && !error && exams.map((exam) => (
-            <ExamRow key={exam.examId} exam={exam} onEnter={onEnter} />
+            <ExamRow key={exam.examId} exam={exam} onEnter={onEnter} onRanking={onRanking} />
           ))}
         </div>
 
@@ -402,309 +420,7 @@ function PracticeExams({ onEnter }) {
   );
 }
 
-// ─── Bài thi của một phòng (mở ra khi bấm vào thẻ phòng) ───────
-function RoomExams({ roomInfo, onBack, onEnter }) {
-  const [exams, setExams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-
-    getRoomExams(roomInfo.roomId)
-      .then((data) => { if (alive) setExams(data || []); })
-      .catch((err) => { if (alive) setError(err.message); })
-      .finally(() => { if (alive) setLoading(false); });
-
-    return () => { alive = false; };
-  }, [roomInfo.roomId]);
-
-  return (
-    <div>
-      <button className="sd-back-btn" onClick={onBack}>
-        <ArrowLeft size={14} /> Tất cả phòng thi
-      </button>
-
-      <div className="sd-class-hero">
-        <div className="sd-class-hero-icon">
-          <School size={22} color="var(--jade)" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 className="sd-class-hero-name">{roomInfo.name}</h2>
-          <div className="sd-class-hero-tags">
-            {roomInfo.subjectName && <span className="sd-tag subject">{roomInfo.subjectName}</span>}
-            {roomInfo.levelName && <span className="sd-tag level">{roomInfo.levelName}</span>}
-            {roomInfo.mySeatNo != null && (
-              <span style={{ fontSize: 12.5, color: 'var(--ink-mute)' }}>
-                Ghế số {roomInfo.mySeatNo}
-              </span>
-            )}
-            {roomInfo.ownerName && (
-              <span style={{ fontSize: 12.5, color: 'var(--ink-mute)' }}>
-                Chủ phòng: {roomInfo.ownerName}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="sd-card">
-        <div className="sd-card-header">
-          <h2>📋 Bài thi trong phòng</h2>
-          <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
-            {loading ? 'đang tải…' : `${exams.length} bài thi`}
-          </span>
-        </div>
-        <div className="sd-exam-list">
-          <ListState
-            loading={loading}
-            error={error}
-            empty={exams.length === 0}
-            emptyText="Phòng này chưa có bài thi nào."
-          />
-          {!loading && !error && exams.map((exam) => (
-            <ExamRow key={exam.examId} exam={exam} onEnter={onEnter} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-// ─── Phòng thi của tôi ─────────────────────────────────────────
-//
-// Thay cho panel "Lớp học của tôi". Khác biệt lớn nhất về thao tác: thí sinh
-// TỰ vào phòng bằng mã, không chờ ai thêm mình vào. Vì thế ô nhập mã nằm ngay
-// trên đầu chứ không giấu sau một nút phụ — với người chưa vào phòng nào thì
-// đó là việc duy nhất họ cần làm ở màn hình này.
-function StudentRooms({ onEnterExam }) {
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [openRoom, setOpenRoom] = useState(null);
-
-  const [code, setCode] = useState('');
-  const [joining, setJoining] = useState(false);
-  const [joinError, setJoinError] = useState(null);
-  const [joinOk, setJoinOk] = useState(null);
-
-  const loadRooms = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      setRooms(await roomService.getJoinedRooms());
-    } catch (err) {
-      setError(err.message || 'Không thể tải danh sách phòng thi');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadRooms(); }, [loadRooms]);
-
-  const join = async (e) => {
-    e.preventDefault();
-    if (!code.trim()) return;
-    setJoining(true);
-    setJoinError(null);
-    setJoinOk(null);
-    try {
-      const room = await roomService.joinByCode(code.trim().toUpperCase());
-      setJoinOk(`Đã vào phòng "${room.name}" — ghế số ${room.mySeatNo}`);
-      setCode('');
-      await loadRooms();
-    } catch (err) {
-      // Phòng hết chỗ trả về 409 kèm câu thông báo của server. Đó không phải
-      // lỗi hệ thống mà là câu trả lời đúng cho "ai nhanh thì vào", nên hiện
-      // nguyên văn thay vì thay bằng một câu chung chung.
-      setJoinError(err.message);
-    } finally {
-      setJoining(false);
-    }
-  };
-
-  if (openRoom) {
-    return (
-      <RoomExams
-        roomInfo={openRoom}
-        onBack={() => { setOpenRoom(null); loadRooms(); }}
-        onEnter={onEnterExam}
-      />
-    );
-  }
-
-  const joinBox = (
-    <form onSubmit={join} className="sd-card" style={{ marginBottom: 20, padding: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <KeyRound size={16} color="var(--jade)" />
-        <div>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
-            Vào phòng bằng mã
-          </p>
-          <p style={{ margin: '2px 0 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>
-            Người ra đề sẽ đọc mã phòng cho bạn. Phòng có giới hạn chỗ thì ai vào trước ngồi trước.
-          </p>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="VD: 49F7JW"
-          maxLength={20}
-          autoComplete="off"
-          style={{
-            flex: '1 1 200px', minWidth: 0,
-            padding: '10px 14px', borderRadius: 10,
-            border: '1px solid var(--line-strong)', background: 'var(--paper)',
-            fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700,
-            letterSpacing: '0.14em', color: 'var(--ink)',
-          }}
-        />
-        <button
-          type="submit"
-          className="sd-primary-btn"
-          disabled={joining || !code.trim()}
-          style={{ flexShrink: 0 }}
-        >
-          {joining ? <><Loader2 size={14} style={{ animation: 'sd-spin 1s linear infinite' }} /> Đang vào…</>
-                   : <><DoorOpen size={14} /> Vào phòng</>}
-        </button>
-      </div>
-
-      {joinError && (
-        <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--cinnabar)' }}>
-          <AlertCircle size={13} style={{ verticalAlign: -2 }} /> {joinError}
-        </p>
-      )}
-      {joinOk && (
-        <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--jade)' }}>
-          <CheckCircle size={13} style={{ verticalAlign: -2 }} /> {joinOk}
-        </p>
-      )}
-    </form>
-  );
-
-  if (loading) return (
-    <div>
-      {joinBox}
-      <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-faint)' }}>
-        <Loader2 size={28} style={{ animation: 'sd-spin 1s linear infinite', marginBottom: 12 }} />
-        <p style={{ margin: 0, fontSize: 13.5 }}>Đang tải phòng thi…</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div>
-      {joinBox}
-
-      {error && (
-        <div style={{ padding: 24, textAlign: 'center', color: 'var(--cinnabar)' }}>
-          <AlertCircle size={24} style={{ marginBottom: 8 }} />
-          <p style={{ margin: 0, fontSize: 13.5 }}>{error}</p>
-        </div>
-      )}
-
-      {!error && rooms.length === 0 && (
-        <div style={{ padding: 48, textAlign: 'center', color: 'var(--ink-mute)' }}>
-          <School size={44} style={{ opacity: 0.3, marginBottom: 14 }} />
-          <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: 'var(--ink-faint)' }}>
-            Bạn chưa ở trong phòng thi nào
-          </p>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-soft)' }}>
-            Nhập mã phòng ở trên để vào, hoặc sang mục <strong>Đề tự do</strong> để
-            tự luyện mà không cần phòng nào cả.
-          </p>
-        </div>
-      )}
-
-      {!error && rooms.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px,1fr))', gap: 16 }}>
-          {rooms.map((room) => {
-            const full = room.capacity != null && room.seatsLeft === 0;
-            return (
-              <button
-                key={room.roomId}
-                type="button"
-                className="sd-card sd-class-card"
-                onClick={() => setOpenRoom(room)}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                    background: 'rgba(47, 143, 111,0.12)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <School size={20} color="var(--jade)" />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.3 }}>
-                      {room.name}
-                    </p>
-                    {room.code && (
-                      <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--ink-mute)', fontFamily: 'var(--mono)', letterSpacing: '0.1em' }}>
-                        {room.code}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                  {room.subjectName && <span className="sd-tag subject">{room.subjectName}</span>}
-                  {room.levelName && <span className="sd-tag level">{room.levelName}</span>}
-                  {room.status === 'RUNNING' && <span className="sd-tag level">Đang thi</span>}
-                  {room.status === 'CLOSED' && <span className="sd-tag">Đã đóng</span>}
-                </div>
-
-                {room.ownerName && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 9, background: 'rgba(43, 38, 32, 0.05)' }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: 'linear-gradient(135deg,var(--violet),var(--azure))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 800, color: 'var(--on-accent)', flexShrink: 0,
-                    }}>
-                      {room.ownerName.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: 'var(--ink-soft)' }}>
-                        {room.ownerName}
-                      </p>
-                      <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-mute)' }}>Người ra đề</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="sd-class-card-foot">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--ink-mute)' }}>
-                    <Users size={13} color="var(--ink-mute)" />
-                    <strong style={{ color: full ? 'var(--cinnabar)' : 'var(--ink-soft)' }}>
-                      {room.capacity == null
-                        ? `${room.memberCount}`
-                        : `${room.memberCount}/${room.capacity}`}
-                    </strong>
-                    {room.capacity == null ? ' thí sinh' : ' chỗ'}
-                    {room.mySeatNo != null && (
-                      <span style={{ color: 'var(--ink-faint)' }}>· ghế {room.mySeatNo}</span>
-                    )}
-                  </span>
-                  <span className="sd-class-card-cta">
-                    Xem bài thi <ChevronRight size={13} />
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Đề thi của tôi: nhóm theo lớp ─────────────────────────────
+// ─── Bài được giao: nhóm theo phòng thi ────────────────────────
 function ExamBoard({ board, loading, error, onEnter, onGoPractice }) {
   const groups = board?.rooms || [];
   const practice = board?.practice || [];
@@ -737,6 +453,9 @@ function ExamBoard({ board, loading, error, onEnter, onGoPractice }) {
               {group.pendingCount > 0 && (
                 <span className="sd-count-pill">{group.pendingCount} cần làm</span>
               )}
+              {group.phase === 'WAITING' && <span className="sd-tag phase-waiting" style={{ marginLeft: 8 }}>Sảnh chờ</span>}
+              {group.phase === 'IN_PROGRESS' && <span className="sd-tag phase-live" style={{ marginLeft: 8 }}>Đang thi</span>}
+              {group.phase === 'ENDED' && <span className="sd-tag phase-ended" style={{ marginLeft: 8 }}>Đã kết thúc</span>}
             </h2>
             <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
               {[group.subjectName, group.levelName].filter(Boolean).join(' · ') || '—'}
@@ -779,12 +498,40 @@ function ExamBoard({ board, loading, error, onEnter, onGoPractice }) {
 export default function StudentDashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState('exams');
+  // Link trong thông báo trỏ tới /student/exams?tab=… (vd "phòng vừa bắt đầu" → tab Phòng thi).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const validTabs = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
+  const [activeNav, setActiveNav] = useState(() => {
+    const tab = searchParams.get('tab');
+    return validTabs.includes(tab) ? tab : 'exams';
+  });
+  // Mã phòng từ link mời.
+  const [inviteCode, setInviteCode] = useState(() => searchParams.get('code'));
+  // Bộ thẻ mở từ chặng lộ trình.
+  const [deckParam, setDeckParam] = useState(() => searchParams.get('deck'));
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const code = searchParams.get('code');
+    if (code) setInviteCode(code);
+    const deck = searchParams.get('deck');
+    if (deck) setDeckParam(deck);
+    if (tab && validTabs.includes(tab)) {
+      setActiveNav(tab);
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const [board, setBoard] = useState(null);
   const [boardLoading, setBoardLoading] = useState(true);
   const [boardError, setBoardError] = useState(null);
   const [studyStats, setStudyStats] = useState(null);
+  // Dữ liệu cho hai khối cuối trang tổng quan: điểm gần đây và tiến độ lộ trình.
+  const [recentResults, setRecentResults] = useState(null);
+  const [myPaths, setMyPaths] = useState(null);
+
+  // Thí sinh tắt trình duyệt giữa bài rồi mở lại trong giờ, nhưng về đây chứ không vào lại phòng.
+  useEffect(() => { pushLeftoverDrafts(); }, []);
 
   useEffect(() => {
     let alive = true;
@@ -796,8 +543,6 @@ export default function StudentDashboard() {
   }, []);
 
   // Số liệu học tập nuôi huy hiệu trên thanh điều hướng và bảng "học hôm nay".
-  // Lỗi ở đây chỉ làm mất huy hiệu chứ không được chặn cả trang: phần thi vẫn
-  // phải dùng được kể cả khi phần học trục trặc.
   useEffect(() => {
     let alive = true;
     getStudyStats()
@@ -806,24 +551,40 @@ export default function StudentDashboard() {
     return () => { alive = false; };
   }, [activeNav]);
 
+  // Điểm gần đây và tiến độ lộ trình.
+  useEffect(() => {
+    let alive = true;
+    getStudentResults()
+      .then((list) => { if (alive) setRecentResults(list ?? []); })
+      .catch(() => { if (alive) setRecentResults([]); });
+    courseService.getEnrolled()
+      .then((list) => { if (alive) setMyPaths(list ?? []); })
+      .catch(() => { if (alive) setMyPaths([]); });
+    return () => { alive = false; };
+  }, []);
+
   const handleLogout = () => { logout(); navigate('/login', { replace: true }); };
 
   /** Vào phòng thi. Server lo phần "vào mới" hay "vào lại phiên đang dở". */
   const enterExam = (examId) => navigate(`/student/exams/${examId}/room`);
 
-  const userName = currentUser?.fullName || currentUser?.email || 'Thí sinh';
+  // Nút "Xếp hạng" trên một đề tự do mở thẳng bảng của đề đó ở mục Bảng xếp hạng.
+  const [rankingTarget, setRankingTarget] = useState(null);
+  const openRanking = (exam) => {
+    setRankingTarget({ type: 'EXAM', id: exam.examId });
+    setActiveNav('ranking');
+  };
+
+  const userName = currentUser?.fullName || currentUser?.email || 'Học viên';
   const initials = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
-  // Server đã đếm sẵn số đề còn phải làm trên tất cả các lớp.
+  // Server đã đếm sẵn số đề còn phải làm ở mọi phòng thi của thí sinh.
   const pendingCount = board?.pendingCount ?? 0;
-  const avgScore = Math.round(MOCK_RESULTS.reduce((a, b) => a + b.score, 0) / MOCK_RESULTS.length);
+
 
   const stats = [
-    { icon: '📝', label: 'Đề thi cần làm',   value: pendingCount, sub: 'Trên tất cả các lớp', color: 'rgba(47, 143, 111,0.12)' },
-    // Hai ô này lấy số thật từ /study/stats. Trước đây chúng hiển thị số đếm
-    // trên MOCK_RESULTS — một con số bịa, và là thứ đầu tiên người dùng nhìn
-    // thấy khi mở app. Số học tập thay đổi mỗi ngày nên nó cũng có ích hơn hẳn
-    // điểm trung bình vốn chỉ đổi khi có bài thi.
+    { icon: '📝', label: 'Đề thi cần làm',   value: pendingCount, sub: 'Từ các phòng thi của bạn', color: 'rgba(47, 143, 111,0.12)' },
+    // Hai ô này lấy số thật từ /study/stats, thay cho điểm trung bình dựng sẵn hồi trước.
     { icon: '🃏', label: 'Thẻ cần ôn',      value: studyStats?.cardsDue ?? 0, sub: 'Đến hạn hôm nay', color: 'rgba(61, 126, 166,0.12)' },
     { icon: '📌', label: 'Câu sai cần sửa', value: studyStats?.mistakesOpen ?? 0, sub: 'Trong sổ tay câu sai', color: 'rgba(201, 146, 46,0.12)' },
     { icon: '🎓', label: 'Từ đã thuộc',     value: studyStats?.cardsMature ?? 0, sub: `Trên ${studyStats?.cardsTotal ?? 0} thẻ đang học`, color: 'rgba(124, 92, 191,0.12)' },
@@ -836,12 +597,9 @@ export default function StudentDashboard() {
       {/* ── SIDEBAR ── */}
       <aside className="sd-sidebar">
         <div className="sd-logo">
-          {/* Tên thương hiệu mang chất tiên hiệp, nhưng mọi nhãn chức năng bên
-              dưới vẫn gọi đúng tên thật ("Đề thi của tôi", "Lịch sử điểm").
-              Đặt tên bay bổng cho chức năng thì thí sinh phải đoán mình đang ở
-              đâu — chủ đề chỉ nên nằm ở lớp trang trí. */}
+          {/* Tên thương hiệu mang chất tiên hiệp. */}
           <h2>⛩️ Tàng Thư Các</h2>
-          <p>Cổng thí sinh</p>
+          <p>Cổng học viên</p>
         </div>
 
         <nav className="sd-nav">
@@ -878,7 +636,7 @@ export default function StudentDashboard() {
             <div className="sd-avatar">{initials}</div>
             <div className="sd-user-info">
               <p className="sd-user-name">{userName}</p>
-              <p className="sd-user-role">Thí sinh · Đăng xuất</p>
+              <p className="sd-user-role">Học viên · Đăng xuất</p>
             </div>
             <LogOut size={14} style={{ color: 'var(--ink-mute)', flexShrink: 0 }} />
           </div>
@@ -894,27 +652,19 @@ export default function StudentDashboard() {
             <p>Xin chào, {userName.split(' ').slice(-1)[0]}! Hãy cố gắng lên nhé 💪</p>
           </div>
           <div className="sd-topbar-right">
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'rgba(43, 38, 32, 0.05)', border: '1px solid rgba(43, 38, 32, 0.07)',
-              borderRadius: 10, padding: '8px 14px', fontSize: 13, color: 'var(--ink-faint)',
-            }}>
-              <Search size={14} /> Tìm đề thi...
-            </div>
-            <button className="sd-icon-btn" title="Thông báo">
-              <Bell size={16} />
-            </button>
+            <SearchBox onOpenExam={enterExam} onOpenCourse={() => setActiveNav('courses')} />
+            <NotificationBell buttonClass="sd-icon-btn" />
           </div>
         </header>
 
         <div className="sd-content">
-          {activeNav === 'rooms' && <StudentRooms onEnterExam={enterExam} />}
+          {activeNav === 'rooms' && <StudentRooms onEnterExam={enterExam} inviteCode={inviteCode} />}
 
-          {activeNav === 'practice' && <PracticeExams onEnter={enterExam} />}
+          {activeNav === 'practice' && <PracticeExams onEnter={enterExam} onRanking={openRanking} />}
 
           {activeNav === 'courses' && <Courses />}
 
-          {activeNav === 'flashcards' && <Flashcards />}
+          {activeNav === 'flashcards' && <Flashcards initialDeckId={deckParam} />}
 
           {activeNav === 'mistakes' && <MistakeBook />}
 
@@ -929,9 +679,6 @@ export default function StudentDashboard() {
               <p className="sd-welcome-sub">
                 Bạn có <strong style={{ color: 'var(--ink)' }}>{pendingCount} đề thi cần làm</strong>. Đừng bỏ lỡ nhé!
               </p>
-            </div>
-            <div className="sd-streak-pill">
-              🔥 Chuỗi học 7 ngày
             </div>
           </div>
 
@@ -962,91 +709,122 @@ export default function StudentDashboard() {
                 onGoPractice={() => setActiveNav('practice')}
               />
 
-              {/* Tiến độ học tập */}
+              {/* Gợi ý ôn theo điểm yếu + bài xếp trình độ. Tự ẩn khi chưa có dữ liệu. */}
+              <InsightsCard onEnterExam={enterExam} />
+
+              {/* Tiến độ lộ trình đang theo. */}
               <div className="sd-card" style={{ marginTop: 20 }}>
                 <div className="sd-card-header">
-                  <h2>📈 Tiến độ học tập</h2>
+                  <h2>📈 Tiến độ lộ trình</h2>
+                  {myPaths?.length > 0 && (
+                    <button className="sd-btn-ghost" style={{ fontSize: 12, padding: '5px 10px' }}
+                            onClick={() => setActiveNav('courses')}>
+                      Mở lộ trình
+                    </button>
+                  )}
                 </div>
                 <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  {[
-                    { label: 'Tiếng Nhật N4', progress: 72, color: 'var(--gold)' },
-                    { label: 'Toán học',       progress: 55, color: 'var(--violet)' },
-                    { label: 'Tiếng Anh IELTS', progress: 80, color: 'var(--azure)' },
-                  ].map((item, i) => (
-                    <div key={i}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-soft)' }}>{item.label}</span>
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: item.color }}>{item.progress}%</span>
+                  {myPaths == null && (
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-faint)' }}>Đang tải…</p>
+                  )}
+                  {myPaths?.length === 0 && (
+                    <>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
+                        Bạn chưa theo lộ trình ôn tập nào. Chọn một lộ trình để học đúng
+                        thứ tự và biết mình đã đi được tới đâu.
+                      </p>
+                      <button className="sd-btn-primary" onClick={() => setActiveNav('courses')}>
+                        <GraduationCap size={14} /> Chọn lộ trình
+                      </button>
+                    </>
+                  )}
+                  {myPaths?.slice(0, 4).map((path, i) => {
+                    const percent = Math.max(0, Math.min(100, Math.round(Number(path.progressPercent) || 0)));
+                    const color = PATH_COLORS[i % PATH_COLORS.length];
+                    return (
+                      <div key={path.courseId}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+                          <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{path.title}</span>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color, flexShrink: 0 }}>{percent}%</span>
+                        </div>
+                        <div className="sd-progress-bar-track">
+                          <div
+                            className="sd-progress-bar-fill"
+                            style={{ width: `${percent}%`, background: `linear-gradient(90deg, ${color}, ${color}88)` }}
+                          />
+                        </div>
+                        <p style={{ margin: '4px 0 0', fontSize: 11.5, color: 'var(--ink-faint)' }}>
+                          {path.completedLessons ?? 0}/{path.totalLessons ?? 0} bài đã xong
+                        </p>
                       </div>
-                      <div className="sd-progress-bar-track">
-                        <div
-                          className="sd-progress-bar-fill"
-                          style={{ width: `${item.progress}%`, background: `linear-gradient(90deg, ${item.color}, ${item.color}88)` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* Right Panel */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Kết quả gần đây */}
+              {/* Điểm gần đây — lấy từ chính lịch sử bài đã nộp. */}
               <div className="sd-card">
                 <div className="sd-card-header">
                   <h2>🏅 Điểm gần đây</h2>
-                  <button className="sd-btn-ghost" style={{ fontSize: 12, padding: '5px 10px' }}>
-                    Xem tất cả
-                  </button>
+                  {recentResults?.length > 0 && (
+                    <button className="sd-btn-ghost" style={{ fontSize: 12, padding: '5px 10px' }}
+                            onClick={() => setActiveNav('history')}>
+                      Xem tất cả
+                    </button>
+                  )}
                 </div>
                 <div>
-                  {MOCK_RESULTS.map((r) => {
-                    const gc = GRADE_COLOR[r.grade] || GRADE_COLOR['B'];
+                  {recentResults == null && (
+                    <p style={{ margin: 0, padding: '16px 22px', fontSize: 13, color: 'var(--ink-faint)' }}>Đang tải…</p>
+                  )}
+                  {recentResults?.length === 0 && (
+                    <p style={{ margin: 0, padding: '16px 22px', fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
+                      Bạn chưa nộp bài nào. Điểm sẽ hiện ở đây ngay sau bài thi đầu tiên.
+                    </p>
+                  )}
+                  {recentResults?.slice(0, 5).map((r) => {
+                    const percent = percentOf(r);
+                    const grade = gradeOf(percent);
+                    const gc = GRADE_COLOR[grade] || GRADE_COLOR['B'];
                     return (
-                      <div key={r.id} className="sd-score-row">
+                      <div key={r.submissionId} className="sd-score-row">
                         <div className="sd-score-circle" style={{ background: gc.bg, color: gc.fg }}>
-                          {r.grade}
+                          {grade}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</p>
-                          <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--ink-faint)' }}>{r.subject} · {r.date}</p>
+                          <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.examTitle}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--ink-faint)' }}>
+                            {/* Bài còn câu chờ chấm tay thì nói rõ, đừng để thí sinh
+                                tưởng con số kia đã là điểm cuối. */}
+                            {formatDeadline(r.submittedAt)}
+                            {r.awaitingManualGrading ? ' · đang chờ chấm' : ''}
+                          </p>
                         </div>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: gc.fg, flexShrink: 0 }}>{r.score}</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: gc.fg, flexShrink: 0 }}>
+                          {percent == null ? '—' : `${percent}%`}
+                        </span>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Bảng xếp hạng mini */}
+              {/* Lối vào bảng xếp hạng thật. */}
               <div className="sd-card">
                 <div className="sd-card-header">
-                  <h2>🏆 Top lớp N4</h2>
+                  <h2>🏆 Bảng xếp hạng</h2>
                 </div>
-                <div style={{ padding: '12px 0' }}>
-                  {[
-                    { rank: 1, name: 'Nguyễn Thị Lan',   score: 96, medal: '🥇' },
-                    { rank: 2, name: 'Trần Văn Bình',     score: 94, medal: '🥈' },
-                    { rank: 3, name: userName,            score: avgScore, medal: '🥉', isMe: true },
-                    { rank: 4, name: 'Phạm Thị Hoa',      score: 88, medal: '' },
-                    { rank: 5, name: 'Lê Văn Đức',        score: 85, medal: '' },
-                  ].map((item) => (
-                    <div key={item.rank} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px 22px',
-                      background: item.isMe ? 'rgba(47, 143, 111,0.05)' : 'none',
-                      borderLeft: item.isMe ? '2px solid var(--jade)' : '2px solid transparent',
-                    }}>
-                      <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>
-                        {item.medal || <span style={{ fontSize: 12, color: 'var(--ink-mute)', fontWeight: 700 }}>#{item.rank}</span>}
-                      </span>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: item.isMe ? 700 : 500, color: item.isMe ? 'var(--jade)' : 'var(--ink-soft)' }}>
-                        {item.name} {item.isMe && '(Bạn)'}
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-mute)' }}>{item.score}</span>
-                    </div>
-                  ))}
+                <div style={{ padding: '14px 22px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-soft)', lineHeight: 1.6 }}>
+                    Xem mình đứng đâu trong phòng thi đã kết thúc, hoặc giữa những người
+                    đã làm cùng một đề tự do.
+                  </p>
+                  <button className="sd-btn-primary" onClick={() => setActiveNav('ranking')}>
+                    <Trophy size={14} /> Xem bảng xếp hạng
+                  </button>
                 </div>
               </div>
             </div>
@@ -1056,14 +834,13 @@ export default function StudentDashboard() {
 
           {activeNav === 'history' && <ResultHistory />}
 
+          {activeNav === 'bookmarks' && <Bookmarks />}
+
+          {/* key đổi theo mục mở sẵn: bấm "Xếp hạng" ở đề khác thì trang dựng lại
+              và mở đúng đề đó, không giữ lựa chọn cũ. */}
           {activeNav === 'ranking' && (
-            <div className="sd-card">
-              <div className="sd-exam-list">
-                <div className="sd-list-state">
-                  <AlertCircle size={15} /> Phần này chưa được xây dựng.
-                </div>
-              </div>
-            </div>
+            <Rankings key={rankingTarget ? `${rankingTarget.type}${rankingTarget.id}` : 'default'}
+                      initial={rankingTarget} />
           )}
         </div>
       </main>

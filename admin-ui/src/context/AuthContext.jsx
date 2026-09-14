@@ -42,10 +42,7 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setIsLoading(false));
   }, []);
 
-  // Token + user nằm trong localStorage nên mọi tab dùng chung. Nếu tab khác
-  // đăng nhập bằng tài khoản khác (VD: mở thêm tab student để thử đề), tab này
-  // vẫn giữ currentUser cũ trong khi token đã là của người khác → mọi request
-  // trả 403 "Forbidden". Nghe `storage` để đồng bộ lại thay vì báo lỗi lạ.
+  // Token + user nằm trong localStorage nên mọi tab dùng chung.
   useEffect(() => {
     const onStorage = (event) => {
       if (event.key !== STORAGE_KEYS.ACCESS_TOKEN && event.key !== STORAGE_KEYS.USER) {

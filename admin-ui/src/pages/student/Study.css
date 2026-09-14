@@ -1,13 +1,4 @@
-/* src/pages/student/Study.css — góc học tập: sổ tay câu sai và thẻ ghi nhớ.
- *
- * Dùng chung bộ token của index.css. Ba màu ngữ nghĩa giữ đúng ý nghĩa cố
- * định đã quy ước: --jade là đúng/đã thuộc, --cinnabar là sai/quên,
- * --gold là cần chú ý/đến hạn.
- *
- * Khác biệt lớn nhất so với các màn hình khác: ở đây có chữ Nhật. Mọi chỗ
- * hiển thị kana/kanji đều phải mang class .jp và lang="ja" — xem chú thích
- * cuối index.css để biết vì sao thiếu nó là người học thuộc nhầm mặt chữ.
- */
+/* src/pages/student/Study.css — góc học tập: sổ tay câu sai và thẻ ghi nhớ. */
 
 /* ── Khung chung ───────────────────────────────────────────────────── */
 .st-wrap {
@@ -115,8 +106,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Câu tới hạn ôn được đánh dấu bằng một vệt kim sắc bên trái — đủ để nhận ra
-   khi lướt, không ồn tới mức át nội dung câu hỏi. */
+/* Câu tới hạn ôn được đánh dấu bằng một vệt kim sắc bên trái. */
 .st-mistake.due { border-left: 3px solid var(--gold); }
 
 .st-mistake-top {
@@ -294,8 +284,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Thanh tiến độ: phần đã thuộc màu ngọc, phần đã ghi danh nhưng chưa thuộc
-   màu kim sắc, phần chưa học để trống. Ba trạng thái thật, không phải trang trí. */
+/* Thanh tiến độ: phần đã thuộc màu ngọc, phần đã ghi danh nhưng chưa thuộc màu kim sắc, phần chưa học để trống. */
 .st-progress {
   height: 6px;
   border-radius: 999px;
@@ -343,8 +332,7 @@
   text-align: center;
 }
 
-/* Mặt trước: chữ cần nhớ, để thật to. Đây là thứ duy nhất người học nhìn
-   trước khi tự kiểm tra, nên không có gì được cạnh tranh với nó. */
+/* Mặt trước: chữ cần nhớ, để thật to. */
 .st-card-prompt {
   font-size: 52px;
   font-weight: 500;
@@ -465,8 +453,7 @@
   .st-option, .st-btn, .st-grade { transition: none; }
 }
 
-/* Vòng xoay chờ. Định nghĩa tại chỗ vì index.css không có sẵn, và mỗi màn
-   hình hiện đang tự khai báo animation của riêng nó (sd-spin, er-spin). */
+/* Vòng xoay chờ. Định nghĩa tại chỗ vì index.css không có sẵn. */
 .st-spin { animation: st-spin 0.9s linear infinite; }
 
 @keyframes st-spin {
@@ -477,16 +464,9 @@
   .st-spin { animation: none; }
 }
 
-/* ── Khoá học ──────────────────────────────────────────────────────
- *
- * Dùng lại .st-deck / .st-progress của phần bộ thẻ: khoá học và bộ thẻ
- * đều là "một thứ để học, có tiến độ", nên chúng nên nhìn giống nhau.
- * Chỉ thêm những gì khoá học có mà bộ thẻ không có: nhãn trạng thái
- * duyệt và trang đọc lý thuyết.
- */
+/* Khoá học */
 
-/* Nhãn trạng thái duyệt. Bốn màu bám đúng ngữ nghĩa đã quy ước ở
-   index.css: kim sắc = đang chờ, ngọc = đã qua, chu sa = bị trả lại. */
+/* Nhãn trạng thái duyệt. Bốn màu bám đúng ngữ nghĩa đã quy ước ở index.css. */
 .st-course-status {
   font-size: 10.5px;
   font-weight: 700;
@@ -515,13 +495,7 @@
 
 .st-review-note b { color: var(--cinnabar-deep); }
 
-/* ── Trang đọc lý thuyết ───────────────────────────────────────────
- *
- * Đây là chỗ người học ĐỌC ĐOẠN DÀI, khác hẳn mọi màn hình khác của
- * ứng dụng vốn là danh sách và nút bấm. Nên nó được bề rộng dòng hẹp
- * (~68 ký tự) và cỡ chữ lớn hơn — hai thứ quyết định việc đọc lâu có
- * mỏi mắt hay không.
- */
+/* Trang đọc lý thuyết */
 .st-lesson {
   max-width: 68ch;
   margin: 0 auto;
@@ -556,9 +530,7 @@
   color: var(--ink-faint);
 }
 
-/* Nội dung lý thuyết. white-space: pre-wrap vì nội dung là văn bản thuần
-   có xuống dòng thật — không phải HTML, nên không cần và không nên
-   dựng markup từ chuỗi của người dùng. */
+/* Nội dung lý thuyết. white-space: pre-wrap vì nội dung là văn bản thuần có xuống dòng thật. */
 .st-lesson-body {
   white-space: pre-wrap;
   font-size: 15.5px;
@@ -646,3 +618,126 @@
 .st-lesson-type.kanji   { background: var(--violet-wash);   color: var(--violet-dark); }
 .st-lesson-type.vocab   { background: var(--jade-wash);     color: var(--jade-deep); }
 .st-lesson-type.reading { background: var(--gold-wash);     color: var(--gold-deep); }
+
+/* LỘ TRÌNH ÔN TẬP — đường đi các chặng Ba trạng thái phải phân biệt được cả khi không nhìn màu. */
+
+.st-path {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: relative;
+}
+/* Sợi chỉ nối các chặng: đây là một đường đi, không phải một danh sách rời. */
+.st-path::before {
+  content: '';
+  position: absolute;
+  left: 25px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: var(--line-strong);
+  z-index: 0;
+}
+.st-path-stage { position: relative; z-index: 1; }
+.st-path-stage .st-lesson-row { width: 100%; text-align: left; }
+
+.st-path-stage.done .st-lesson-row { border-left: 3px solid var(--jade); }
+.st-path-stage.done .st-lesson-no {
+  background: var(--jade);
+  border-color: var(--jade);
+  color: var(--on-jade);
+}
+
+.st-path-stage.current .st-lesson-row {
+  border-color: var(--jade);
+  box-shadow: 0 0 0 3px var(--jade-wash);
+}
+.st-path-stage.current .st-lesson-no { border-color: var(--jade); color: var(--jade-deep); font-weight: 800; }
+
+.st-path-stage.locked .st-lesson-row {
+  cursor: not-allowed;
+  background: var(--paper);
+  color: var(--ink-mute);
+}
+.st-path-stage.locked .st-lesson-row:hover { border-color: var(--line); background: var(--paper); }
+.st-path-stage.locked .st-lesson-no { color: var(--ink-faint); }
+
+.st-path-here {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--jade);
+  color: var(--on-jade);
+  white-space: nowrap;
+}
+
+.st-path-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  color: var(--ink-mute);
+}
+
+/* Ô bài kiểm tra của chặng trong trang đọc chặng. */
+.st-stage-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 146, 46, 0.35);
+  background: var(--gold-wash);
+}
+.st-stage-check > svg { flex-shrink: 0; color: var(--gold-deep); }
+.st-stage-check strong { display: block; font-size: 13.5px; color: var(--ink); }
+.st-stage-check p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+.st-stage-check.passed { border-color: rgba(47, 143, 111, 0.35); background: var(--jade-tint); }
+.st-stage-check.passed > svg { color: var(--jade); }
+
+@media (max-width: 640px) {
+  .st-stage-check { flex-wrap: wrap; }
+  .st-path-here { display: none; }
+}
+
+/* ── Bộ thẻ tự tạo ── */
+.st-section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.st-section-title h3 { margin: 0; font-size: 15px; color: var(--ink); }
+.st-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.st-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 600; background: rgba(43, 38, 32, 0.06); color: var(--ink-mute); white-space: nowrap; }
+.st-chip.new { background: rgba(59, 111, 182, 0.12); color: var(--azure); }
+.st-chip.learning { background: rgba(201, 146, 46, 0.14); color: var(--gold); }
+.st-chip.mature { background: rgba(47, 143, 111, 0.14); color: var(--jade); }
+.st-chip.due { background: rgba(185, 58, 43, 0.1); color: var(--cinnabar); }
+.st-builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.st-panel { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.st-panel h4 { margin: 0; font-size: 14px; color: var(--ink); }
+.st-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-mute); }
+.st-input { width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; font-size: 14px; }
+.st-input:focus { outline: 2px solid var(--jade); outline-offset: -1px; }
+.st-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.st-cardlist { display: flex; flex-direction: column; gap: 8px; }
+.st-cardrow { display: grid; grid-template-columns: minmax(120px, 1.1fr) minmax(140px, 2fr) auto auto; gap: 12px; align-items: center; padding: 10px 14px; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; }
+.st-cardrow-front { font-size: 18px; font-weight: 700; color: var(--ink); }
+.st-cardrow-reading { font-size: 12px; color: var(--ink-mute); }
+.st-cardrow-back { font-size: 13.5px; color: var(--ink); }
+.st-cardrow-actions { display: flex; gap: 4px; justify-content: flex-end; min-width: 60px; }
+.st-icon-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px; cursor: pointer; color: var(--ink-mute); display: inline-flex; }
+.st-icon-btn:hover { background: rgba(43, 38, 32, 0.06); }
+.st-hits { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow: auto; }
+.st-hit { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.st-hit-main { flex: 1; min-width: 0; }
+.st-modal-overlay { position: fixed; inset: 0; background: rgba(20, 16, 12, 0.45); display: grid; place-items: center; z-index: 1000; padding: 16px; }
+.st-modal { width: min(480px, 100%); background: var(--paper-raised); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-lg); }
+@media (max-width: 640px) {
+  .st-cardrow { grid-template-columns: 1fr; }
+  .st-row2 { grid-template-columns: 1fr; }
+}
+.st-deck-meta { flex-wrap: wrap; row-gap: 6px; }
+.st-deck-meta > * { white-space: nowrap; }

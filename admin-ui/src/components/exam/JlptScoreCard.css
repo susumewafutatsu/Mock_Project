@@ -1,0 +1,168 @@
+/* Bảng điểm JLPT — xem chú thích trong JlptScoreCard.jsx */
+
+.jlpt-card {
+  border: 1px solid rgba(43, 38, 32, 0.1);
+  border-radius: 12px;
+  padding: 18px 20px;
+  background: var(--paper, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Viền trái đậm màu là dấu hiệu đọc được nhanh nhất "đỗ hay trượt", kể cả
+   khi người dùng chỉ liếc qua trên điện thoại. */
+.jlpt-card.passed { border-left: 4px solid var(--jade, #2f8f6f); }
+.jlpt-card.failed { border-left: 4px solid var(--cinnabar, #b93a2b); }
+
+.jlpt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.jlpt-verdict {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 220px;
+}
+
+.jlpt-verdict h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Câu giải thích lý do trượt là thứ có giá trị nhất trong cả khối này — nó nói người học phải làm gì tiếp theo. */
+.jlpt-verdict p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-soft, #5a5248);
+}
+
+.jlpt-icon-pass { color: var(--jade, #2f8f6f); flex-shrink: 0; margin-top: 2px; }
+.jlpt-icon-fail { color: var(--cinnabar, #b93a2b); flex-shrink: 0; margin-top: 2px; }
+
+.jlpt-total {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.jlpt-total-value { font-size: 30px; font-weight: 800; line-height: 1; }
+.jlpt-total-max   { font-size: 14px; color: var(--ink-faint, #8a8175); }
+
+.jlpt-total-need {
+  font-size: 11.5px;
+  color: var(--ink-faint, #8a8175);
+  margin-left: 8px;
+}
+
+.jlpt-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.jlpt-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.jlpt-group-name { font-size: 13.5px; font-weight: 700; }
+.jlpt-group-name small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-faint, #8a8175);
+}
+
+.jlpt-group-score { font-size: 17px; font-weight: 800; }
+.jlpt-group-score small { font-size: 12px; font-weight: 400; color: var(--ink-faint, #8a8175); }
+
+.jlpt-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(43, 38, 32, 0.08);
+  overflow: hidden;
+}
+
+.jlpt-bar-fill {
+  height: 100%;
+  background: var(--jade, #2f8f6f);
+}
+
+.jlpt-group.below .jlpt-bar-fill {
+  background: var(--cinnabar, #b93a2b);
+}
+
+/* Vạch điểm liệt. Dùng màu mực đậm chứ không phải màu cảnh báo: nó là một
+   cái mốc trên thước, không phải một lỗi. */
+.jlpt-bar-min {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--ink-body, #2b2620);
+  opacity: 0.55;
+}
+
+.jlpt-group-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--ink-faint, #8a8175);
+}
+
+.jlpt-ok { color: var(--jade, #2f8f6f); }
+
+.jlpt-warn {
+  color: var(--cinnabar, #b93a2b);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.jlpt-disclaimer {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-faint, #8a8175);
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  border-top: 1px solid rgba(43, 38, 32, 0.07);
+  padding-top: 12px;
+}
+
+.jlpt-disclaimer svg { flex-shrink: 0; margin-top: 2px; }
+
+/* Bản gọn cho danh sách lịch sử */
+.jlpt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.jlpt-pill.passed { background: rgba(47, 143, 111, 0.12); color: var(--jade, #2f8f6f); }
+.jlpt-pill.failed { background: rgba(185, 58, 43, 0.1);  color: var(--cinnabar, #b93a2b); }
+
+@media (max-width: 520px) {
+  .jlpt-groups { grid-template-columns: 1fr; }
+}

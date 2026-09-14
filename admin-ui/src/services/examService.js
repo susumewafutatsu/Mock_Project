@@ -1,62 +1,25 @@
 // src/services/examService.js
 // Gọi API phòng thi của thí sinh.
-//
-// Hợp đồng thời gian: server là nơi duy nhất có quyền nói còn bao nhiêu giờ.
-// Mọi response ở đây đều mang { serverTime, expiresAt, remainingSeconds }, và
-// client chỉ đếm ngược từ remainingSeconds — không bao giờ tự tính từ đồng hồ
-// máy thí sinh (xem hooks/useExamTimer.js).
-//
-// Mọi endpoint trả ApiResponse<T> = { success, message, data, error } nên giá
-// trị thật luôn nằm ở data.data.
 
-import api from './api';
+import api, { tokenStore } from './api';
+import { ackAnswers, clearDraft, listPendingDrafts, toPayload } from '../utils/examDraft';
 
 // ── Tìm đề ───────────────────────────────────────────────────────────
-//
-// Ba lối vào cho ba màn hình, không phải một danh sách dùng chung. Thí sinh gặp
-// đề thi theo hai đường khác hẳn nhau — bài người ra đề giao trong lớp, và đề tự
-// do em tự chọn để ôn — nên back-end trả về hai thứ riêng biệt, mỗi thứ có
-// trường `source` nói rõ nó là loại nào.
-//
-// Mọi ExamResponse đều mang sẵn `availability` do server tính; client không bao
-// giờ tự so startTime/endTime với đồng hồ máy thí sinh.
+// Đề được giao và đề tự do; trạng thái mở/đóng (availability) do server tính.
 
-/**
- * Trang chủ: đề đã nhóm sẵn theo lớp, cộng vài đề luyện tập gợi ý.
- * @returns StudentExamBoardResponse
- *   { classes: ClassExamGroup[], practice: ExamResponse[], pendingCount,
- *     practiceTruncated, serverTime }
- *   ClassExamGroup = { classId, className, subjectName, levelName, teacherName,
- *                      pendingCount, exams: ExamResponse[] }
- */
+/** Trang chủ: đề đã nhóm sẵn theo lớp, cộng vài đề luyện tập gợi ý. */
 export async function getExamBoard() {
   const { data } = await api.get('/student/exams');
   return data.data;
 }
 
-/**
- * Toàn bộ đề của MỘT phòng thi — không phân trang vì một phòng hiếm khi có nhiều đề.
- * Ném 404 nếu thí sinh không ở trong phòng đó.
- * @returns ExamResponse[]
- */
+/** Toàn bộ đề của MỘT phòng thi — không phân trang vì một phòng hiếm khi có nhiều đề. */
 export async function getRoomExams(roomId) {
   const { data } = await api.get(`/student/rooms/${roomId}/exams`);
   return data.data;
 }
 
-/**
- * Một trang đề luyện tập tự do, kèm bộ lọc trình độ.
- *
- * Không truyền levelId/subjectId thì server tự chọn một trình độ theo phòng thi
- * sinh đang học và bật `filteredByEnrolledLevels` — client phải hiện lối thoát
- * "xem tất cả trình độ", nếu không thí sinh sẽ tưởng đây là toàn bộ đề.
- *
- * @param params { levelId?, subjectId?, page = 0, size = 12 } — page đếm từ 0
- * @returns PracticeExamsResponse
- *   { levels: PracticeLevelOption[], appliedLevelId, appliedSubjectId,
- *     filteredByEnrolledLevels, exams, page, size, totalElements, totalPages }
- *   PracticeLevelOption = { levelId, levelName, subjectName, examCount, enrolled }
- */
+/** Một trang đề luyện tập tự do, kèm bộ lọc trình độ. */
 export async function getPracticeExams({
   levelId = null,
   subjectId = null,
@@ -69,8 +32,7 @@ export async function getPracticeExams({
   // sẽ khiến Spring cố ép kiểu và trả 400.
   if (levelId != null) params.levelId = levelId;
   if (subjectId != null) params.subjectId = subjectId;
-  // Phải nói rõ "tôi muốn xem tất cả", vì không gửi bộ lọc mang nghĩa khác:
-  // đó là lúc vừa mở trang và để server chọn hộ một trình độ.
+  // Phải nói rõ "tôi muốn xem tất cả", vì không gửi bộ lọc mang nghĩa khác.
   if (allLevels) params.allLevels = true;
 
   const { data } = await api.get('/student/practice-exams', { params });
@@ -79,58 +41,100 @@ export async function getPracticeExams({
 
 // ── Phiên làm bài ────────────────────────────────────────────────────
 
-/**
- * Vào phòng thi. Idempotent — gọi lại là "vào lại phòng thi" chứ không phải
- * "thi lại": server trả về đúng phiên đang dở kèm các đáp án đã lưu, cờ
- * `resumed` cho biết đó là phiên mới hay phiên cũ.
- * Ném lỗi 409 nếu đã nộp bài, đề chưa mở / đã đóng, hoặc phiên đã hết giờ
- * (bài được nộp tự động trước khi báo lỗi).
- * @returns ExamSessionResponse — { remainingSeconds, expiresAt, serverTime, questions, ... }
- */
+/** Vào phòng thi. Idempotent — gọi lại là "vào lại phòng thi" chứ không phải "thi lại" */
 export async function startExam(examId) {
   const { data } = await api.post(`/student/exams/${examId}/start`);
   return data.data;
 }
 
-/**
- * Đọc lại phiên đang dở, không tạo mới. Dùng khi mạng vừa trở lại: lấy về toàn
- * bộ đáp án đã lưu trên server và thời gian còn lại thật.
- * Ném 404 nếu thí sinh chưa từng bắt đầu đề này.
- */
+/** Đọc lại phiên đang dở, không tạo mới. */
 export async function getSession(examId) {
   const { data } = await api.get(`/student/exams/${examId}/session`);
   return data.data;
 }
 
-/**
- * Autosave một câu. Gọi ngay mỗi lần thí sinh bấm chọn, không đợi nộp bài.
- * Upsert theo (submissionId, questionId) nên gửi lại cùng một câu là an toàn.
- * @param answer { questionId, snapshotAnswerId?, essayResponse? }
- *        snapshotAnswerId = null để bỏ chọn; essayResponse rỗng để xoá bài viết.
- * @returns AnswerSavedResponse — có remainingSeconds để đồng bộ lại đồng hồ
- */
+/** Đẩy một lô đáp án đã gom trong localStorage (utils/examDraft.js). */
+export async function saveAnswers(examId, submissionId, answers) {
+  const { data } = await api.put(`/student/exams/${examId}/answers/batch`, {
+    submissionId,
+    answers,
+  });
+  return data.data;
+}
+
+/** fetch keepalive có giới hạn 64KB cho tổng các request đang treo của trang. */
+const KEEPALIVE_MAX_BYTES = 60 * 1024;
+
+/** Bản "bắn rồi quên" của saveAnswers, dùng lúc tab bị ẩn / trang sắp đóng. */
+export function saveAnswersKeepalive(examId, submissionId, answers) {
+  const body = JSON.stringify({ submissionId, answers });
+  // Đếm byte UTF-8 chứ không đếm ký tự: một chữ Nhật là 3 byte.
+  if (!answers.length || new Blob([body]).size > KEEPALIVE_MAX_BYTES) {
+    return null;
+  }
+  const token = tokenStore.getAccessToken();
+  return fetch(`${api.defaults.baseURL}/student/exams/${examId}/answers/batch`, {
+    method: 'PUT',
+    keepalive: true,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body,
+  }).then(async (res) => {
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) {
+      // Cùng thứ tự đọc message với interceptor trong api.js.
+      const err = new Error(
+        (payload?.success === false ? payload?.error : null) ||
+          payload?.message ||
+          payload?.error ||
+          `HTTP ${res.status}`
+      );
+      err.status = res.status;
+      throw err;
+    }
+    return payload?.data;
+  });
+}
+
+/** Đẩy các bản nháp còn sót trên máy này. */
+export async function pushLeftoverDrafts() {
+  for (const draft of listPendingDrafts()) {
+    const sentRevs = Object.fromEntries(
+      Object.entries(draft.pending).map(([qid, entry]) => [qid, entry.rev])
+    );
+    try {
+      await saveAnswers(draft.examId, draft.submissionId, toPayload(draft.pending));
+      ackAnswers(draft.submissionId, sentRevs);
+    } catch (err) {
+      if (isSessionClosedError(err)) clearDraft(draft.submissionId);
+    }
+  }
+}
+
+/** Như trên nhưng bắn bằng keepalive — dùng ngay trước khi đăng xuất xoá token. */
+export function pushLeftoverDraftsKeepalive() {
+  for (const draft of listPendingDrafts()) {
+    saveAnswersKeepalive(draft.examId, draft.submissionId, toPayload(draft.pending))?.catch(
+      () => {}
+    );
+  }
+}
+
+/** Lưu một câu. Endpoint cũ, phòng thi không còn dùng — giữ cho tương thích. */
 export async function saveAnswer(examId, answer) {
   const { data } = await api.put(`/student/exams/${examId}/answers`, answer);
   return data.data;
 }
 
-/**
- * Nhịp sống của client, gọi mỗi 15-30 giây. Chỉ để server biết thí sinh còn kết
- * nối — KHÔNG gia hạn thêm giờ.
- * @returns HeartbeatResponse — { remainingSeconds, autoSubmitted, recoveredFromAtRisk, ... }
- *          autoSubmitted = true nghĩa là server vừa chốt bài vì hết giờ.
- */
+/** Nhịp sống của client, gọi mỗi 15-30 giây. */
 export async function heartbeat(examId) {
   const { data } = await api.post(`/student/exams/${examId}/heartbeat`);
   return data.data;
 }
 
-/**
- * Nộp bài. Đáp án đã autosave từ trước nên body thường để rỗng; `answers` chỉ
- * là lưới an toàn cho câu mà lần autosave cuối chưa kịp gửi lên.
- * @param pendingAnswers [{ questionId, snapshotAnswerId?, essayResponse? }]
- * @returns ExamResultResponse
- */
+/** Nộp bài. Đáp án đã autosave từ trước nên body thường để rỗng. */
 export async function submitExam(examId, pendingAnswers = []) {
   const { data } = await api.post(`/student/exams/${examId}/submit`, {
     answers: pendingAnswers,
@@ -139,6 +143,12 @@ export async function submitExam(examId, pendingAnswers = []) {
 }
 
 // ── Kết quả ──────────────────────────────────────────────────────────
+
+/** Bảng xếp hạng của một đề tự do: tốp 20 + dòng của chính mình (myRow), kể cả khi mình nằm ngoài tốp. */
+export async function getExamLeaderboard(examId) {
+  const { data } = await api.get(`/student/exams/${examId}/leaderboard`);
+  return data.data;
+}
 
 export async function getResult(submissionId) {
   const { data } = await api.get(`/student/submissions/${submissionId}/result`);
@@ -153,27 +163,12 @@ export async function getStudentResults() {
 
 // ── Nhận dạng lỗi ────────────────────────────────────────────────────
 
-/**
- * Lỗi "phiên thi không còn mở nữa": hết giờ và đã bị nộp tự động, hoặc đã nộp
- * từ trước. Server dùng 409 cho mọi trường hợp này (BusinessException).
- *
- * Dùng status chứ không so nội dung message: message là câu tiếng Việt để hiện
- * cho thí sinh đọc, sửa lại lúc nào cũng được mà không làm hỏng logic client.
- */
+/** Lỗi "phiên thi không còn mở nữa": hết giờ và đã bị nộp tự động, hoặc đã nộp từ trước. */
 export function isSessionClosedError(error) {
   return error?.status === 409;
 }
 
-/**
- * Lỗi "đã dùng hết số lượt làm bài".
- *
- * Cũng là 409 như mọi BusinessException khác, nên phải phân biệt bằng nội dung
- * message — server không có mã lỗi riêng cho từng nguyên nhân. Chỗ duy nhất
- * trong client làm việc này; nếu về sau back-end thêm mã lỗi thì sửa đúng ở đây.
- *
- * Dùng để chọn tiêu đề thông báo cho đúng, KHÔNG dùng để quyết định có chặn hay
- * không — việc chặn là của server và đã xong trước khi lỗi về tới đây.
- */
+/** Lỗi "đã dùng hết số lượt làm bài". */
 export function isAttemptsExhaustedError(error) {
   return error?.status === 409 && /hết\s.*lượt/i.test(error?.message || '');
 }

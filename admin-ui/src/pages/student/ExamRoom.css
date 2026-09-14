@@ -146,6 +146,12 @@
   color: var(--gold);
 }
 
+.er-banner.info {
+  background: rgba(46, 108, 160, 0.08);
+  border-bottom: 1px solid rgba(46, 108, 160, 0.2);
+  color: var(--azure);
+}
+
 .er-banner.error {
   background: rgba(185, 58, 43, 0.1);
   border-bottom: 1px solid rgba(185, 58, 43, 0.22);
@@ -521,14 +527,7 @@
   margin-top: 20px;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   LỚP TIÊN HIỆP — PHÒNG THI
-   ────────────────────────────────────────────────────────────────
-   Phòng thi là màn hình duy nhất thí sinh nhìn liên tục 45 phút,
-   nên nó được trang trí ÍT hơn mọi trang khác. Chỉ giữ hai thứ:
-   tiêu đề khắc mộc, và đồng hồ dạng thẻ ngọc. Còn lại để trống —
-   trong lúc làm bài, mọi hoa văn đều là thứ tranh chỗ với đề.
-   ════════════════════════════════════════════════════════════════ */
+/* LỚP TIÊN HIỆP — PHÒNG THI */
 
 .er-topbar-title h1,
 .er-nav-panel h3,
@@ -541,9 +540,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Đồng hồ: thẻ ngọc bo tròn, chữ số dùng font tiêu đề cho ra dáng
-   khắc. tabular-nums giữ ở trên — thiếu nó thì số nhảy ngang mỗi
-   giây, và một cái đồng hồ rung là thứ gây lo hơn cả việc hết giờ. */
+/* Đồng hồ: thẻ ngọc bo tròn, chữ số dùng font tiêu đề cho ra dáng khắc. */
 .er-clock {
   font-family: var(--heading);
   background: var(--jade-tint);
@@ -556,9 +553,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* ── Lựa chọn ──
-   Nền giấy sáng nên mảng tô nhạt gần như biến mất; sức nặng chuyển
-   sang đường viền và ô chữ cái. */
+/* Lựa chọn Nền giấy sáng nên mảng tô nhạt gần như biến mất; sức nặng chuyển sang đường viền và ô chữ cái. */
 .er-option {
   background: var(--paper);
   border-color: var(--line);
@@ -576,8 +571,7 @@
   border: 1px solid var(--line-strong);
   color: var(--ink-mute);
 }
-/* Chữ trên nền ngọc đặc phải là chữ sáng. Để nguyên tông ngọc đậm
-   như dải màu cũ thì hai màu gần nhau quá, ô chữ cái đọc không ra. */
+/* Chữ trên nền ngọc đặc phải là chữ sáng. */
 .er-option.selected .er-option-key {
   background: var(--jade);
   border-color: var(--jade);
@@ -595,3 +589,114 @@
 .er-modal {
   box-shadow: var(--shadow);
 }
+
+/* ─── Sau khi nộp: hạng của mình + bảng xếp hạng đề tự do ─── */
+.er-rank-line {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--ink-body);
+  line-height: 1.6;
+}
+.er-rank-board {
+  margin-top: 16px;
+  text-align: left;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+/* Phần thi (JLPT) Thanh này chỉ xuất hiện với đề chia phần. */
+.er-sections {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 20px 12px;
+}
+
+.er-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(43, 38, 32, 0.12);
+  background: var(--paper, #fff);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  min-width: 150px;
+}
+
+.er-section .er-section-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-body, #2b2620);
+}
+
+.er-section .er-section-meta {
+  font-size: 11.5px;
+  color: var(--ink-faint, #8a8175);
+}
+
+.er-section.live {
+  border-color: var(--jade, #2f8f6f);
+  background: rgba(47, 143, 111, 0.06);
+}
+
+.er-section.live .er-section-meta {
+  color: var(--jade, #2f8f6f);
+  font-weight: 700;
+}
+
+.er-section.locked {
+  opacity: 0.55;
+}
+
+.er-section.upcoming {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Viền đậm cho phần đang MỞ TRÊN MÀN HÌNH — khác với phần đang chạy đồng
+   hồ, vì thí sinh mở lại được phần đã khoá để xem. */
+.er-section.viewing {
+  outline: 2px solid var(--azure, #3d7ea6);
+  outline-offset: -2px;
+}
+
+/* Bài đọc (読解) Đoạn văn dùng chung cho 2–4 câu. */
+.er-passage {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(43, 38, 32, 0.035);
+  border-left: 3px solid var(--gold, #c9922e);
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.er-passage h4 {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  color: var(--ink-soft, #5a5248);
+}
+
+.er-passage-body {
+  font-size: 14.5px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  color: var(--ink-body, #2b2620);
+}
+
+/* ── Trình phát file nghe (聴解) ─────────────────────────────── */
+.er-audio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 4px 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(61, 126, 166, 0.07);
+}
+.er-audio-meta { font-size: 12.5px; color: var(--ink-soft, #5a5248); }
+.er-audio-error { width: 100%; font-size: 12.5px; color: var(--cinnabar, #b93a2b); }

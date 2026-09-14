@@ -1,7 +1,5 @@
 // src/pages/teacher/QuestionBank.jsx
 // Trang quản lý ngân hàng câu hỏi của người ra đề.
-// Render bên trong khung TeacherDashboard nên chỉ trả về phần nội dung,
-// dùng lại lớp CSS td-* thay vì tự định nghĩa style mới.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -9,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
 import QuestionForm from '../../components/question/QuestionForm';
+import examStructureService from '../../services/examStructureService';
 import * as questionService from '../../services/questionService';
 import roomService from '../../services/roomService';
 import {
@@ -20,12 +19,7 @@ import { truncate } from '../../utils/helpers';
 
 const PAGE_SIZE = 20;
 
-/**
- * Form tạo ngân hàng mới. Bắt buộc chọn trình độ: ngân hàng không có trình độ
- * thì lúc tạo đề thi không thể tự chọn đúng ngân hàng theo trình độ của đề,
- * người ra đề phải mò tay giữa các ngân hàng.
- * Danh sách trình độ lấy từ GET /api/teacher/levels (dữ liệu seed dùng chung).
- */
+/** Form tạo ngân hàng mới. Bắt buộc chọn trình độ. */
 function NewBankModal({ onClose, onCreate, creating }) {
   const [title, setTitle] = useState('');
   const [levelId, setLevelId] = useState('');
@@ -135,6 +129,8 @@ function NewBankModal({ onClose, onCreate, creating }) {
 const QuestionBank = () => {
   const [banks, setBanks] = useState([]);
   const [bankId, setBankId] = useState(null);
+  // Bài đọc của ngân hàng đang chọn, để form câu hỏi 読解 gắn câu vào một đoạn văn có sẵn.
+  const [passages, setPassages] = useState([]);
   const [page, setPage] = useState(0);
   const [pageData, setPageData] = useState({ content: [], totalElements: 0, totalPages: 0 });
 
@@ -252,6 +248,15 @@ const QuestionBank = () => {
       setCreatingBank(false);
     }
   };
+
+  useEffect(() => {
+    if (!bankId) { setPassages([]); return undefined; }
+    let alive = true;
+    examStructureService.getPassages(bankId)
+      .then((list) => { if (alive) setPassages(list); })
+      .catch(() => { if (alive) setPassages([]); });
+    return () => { alive = false; };
+  }, [bankId]);
 
   const selectedBank = banks.find((b) => b.bankId === bankId);
 
@@ -478,6 +483,7 @@ const QuestionBank = () => {
           onSubmit={handleSubmit}
           onCancel={() => setEditing(null)}
           submitting={submitting}
+          passages={passages}
         />
       )}
     </div>

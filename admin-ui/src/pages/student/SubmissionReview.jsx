@@ -1,26 +1,15 @@
 // src/pages/student/SubmissionReview.jsx
-//
-// Xem lại một bài đã nộp: từng câu, mình đã chọn gì, đáp án đúng là gì, và vì
-// sao. Đây là màn hình biến một bài thi đã xong thành thứ học được.
-//
-// Trang chỉ đọc — không có nút sửa đáp án, và server cũng không nhận. Bài đã
-// chốt thì SubmissionDetails là dữ liệu lịch sử.
-//
-// Hai điều kiện làm thay đổi hẳn nội dung trang, cả hai đều do server nói:
-//
-//   - `reviewAllowed = false`: người ra đề tắt xem đáp án cho đề này. Khi đó
-//     `correctSnapshotAnswerId` và `explanation` đều null, và trang phải nói rõ
-//     lý do thay vì hiện các ô trống trông như lỗi.
-//   - `awaitingManualGrading`: câu tự luận chưa ai chấm. Không được vẽ nó thành
-//     "sai" chỉ vì scoreEarned đang là 0.
+// Xem lại một bài đã nộp: từng câu, mình đã chọn gì, đáp án đúng là gì, và vì sao.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertCircle, ArrowLeft, CheckCircle2, Clock, Eye, EyeOff, Loader2,
-  RotateCcw, XCircle, Zap,
+  RotateCcw, XCircle, Zap, Bookmark,
 } from 'lucide-react';
 import { getResult } from '../../services/examService';
+import { bookmarkApi } from '../../services/engagementService';
+import JlptScoreCard from '../../components/exam/JlptScoreCard';
 import './SubmissionReview.css';
 
 const OPTION_KEYS = 'ABCDEFGHIJ';
@@ -41,13 +30,7 @@ function formatScore(value) {
   return String(Number(value));
 }
 
-/**
- * Trạng thái của một câu, dùng chung cho màu viền thẻ, nhãn kết quả và ô điều
- * hướng — ba chỗ đó phải luôn nói cùng một điều.
- *
- * Thứ tự kiểm quan trọng: "chờ chấm" phải đứng trước "sai", vì câu tự luận chưa
- * chấm nào cũng đang mang correct=false và scoreEarned=0.
- */
+/** Trạng thái của một câu, dùng chung cho màu viền thẻ, nhãn kết quả và ô điều hướng. */
 function verdictOf(detail) {
   if (detail.awaitingManualGrading) return 'pending';
   const answered = detail.selectedSnapshotAnswerId != null
@@ -75,8 +58,7 @@ function Option({ option, index, selectedId, correctId, revealed }) {
   const picked = option.snapshotAnswerId === selectedId;
   const isCorrect = revealed && option.snapshotAnswerId === correctId;
 
-  // Chưa mở đáp án thì lựa chọn của thí sinh chỉ được tô xanh dương — trung
-  // tính. Tô xanh lá hay đỏ ở đây là để lộ đáp án qua đường màu sắc.
+  // Chưa mở đáp án thì lựa chọn của thí sinh chỉ được tô xanh dương — trung tính.
   let cls = '';
   if (isCorrect) cls = 'correct';
   else if (picked) cls = revealed ? 'wrong' : 'picked';
@@ -91,7 +73,7 @@ function Option({ option, index, selectedId, correctId, revealed }) {
   );
 }
 
-function QuestionCard({ detail, order, revealed }) {
+function QuestionCard({ detail, order, revealed, marked, onToggleMark }) {
   const verdict = verdictOf(detail);
   const Icon = VERDICT_ICON[verdict];
   const isEssay = detail.questionType === 'ESSAY';
@@ -108,6 +90,18 @@ function QuestionCard({ detail, order, revealed }) {
         <span className="sr-q-points">
           {formatScore(detail.scoreEarned)} / {formatScore(detail.points)} điểm
         </span>
+        {/* Đánh dấu để ôn lại — kể cả câu làm đúng nhưng còn phân vân. */}
+        {onToggleMark && (
+          <button
+            type="button"
+            className={`sr-mark ${marked ? 'on' : ''}`}
+            onClick={() => onToggleMark(detail.questionId)}
+            title={marked ? 'Bỏ đánh dấu' : 'Đánh dấu câu này để ôn lại'}
+          >
+            <Bookmark size={13} fill={marked ? 'currentColor' : 'none'} />
+            {marked ? 'Đã đánh dấu' : 'Đánh dấu'}
+          </button>
+        )}
       </div>
 
       <p className="sr-q-content">{detail.content}</p>
@@ -171,6 +165,34 @@ export default function SubmissionReview() {
   useEffect(() => { load(); }, [load]);
 
   const details = useMemo(() => result?.details ?? [], [result]);
+
+  // Câu đã đánh dấu. Lỗi tải chỉ làm các nút hiện "Đánh dấu" — không chặn xem bài.
+  const [marked, setMarked] = useState(() => new Set());
+  useEffect(() => {
+    bookmarkApi.list()
+      .then((list) => setMarked(new Set(list.map((b) => b.questionId))))
+      .catch(() => {});
+  }, []);
+
+  const toggleMark = useCallback(async (questionId) => {
+    const on = marked.has(questionId);
+    // Đổi ngay trên màn hình, gửi sau: chờ server mới đổi thì nút có cảm giác đơ.
+    setMarked((prev) => {
+      const next = new Set(prev);
+      if (on) next.delete(questionId); else next.add(questionId);
+      return next;
+    });
+    try {
+      if (on) await bookmarkApi.remove(questionId);
+      else await bookmarkApi.save(questionId, null);
+    } catch {
+      setMarked((prev) => {
+        const next = new Set(prev);
+        if (on) next.add(questionId); else next.delete(questionId);
+        return next;
+      });
+    }
+  }, [marked]);
 
   if (loading) {
     return (
@@ -267,6 +289,13 @@ export default function SubmissionReview() {
           </div>
         )}
 
+        {/* Bảng điểm JLPT — chỉ có với đề chấm theo thang quy đổi. */}
+        {result.jlpt && (
+          <div style={{ marginBottom: 20 }}>
+            <JlptScoreCard jlpt={result.jlpt} />
+          </div>
+        )}
+
         {/* Lưới điều hướng: nhìn một cái là thấy mình sai ở đâu, bấm là nhảy tới. */}
         <div className="sr-nav">
           {details.map((detail, i) => (
@@ -285,6 +314,8 @@ export default function SubmissionReview() {
 
         {details.map((detail, i) => (
           <QuestionCard
+            marked={marked.has(detail.questionId)}
+            onToggleMark={toggleMark}
             key={detail.questionId}
             detail={detail}
             order={i + 1}

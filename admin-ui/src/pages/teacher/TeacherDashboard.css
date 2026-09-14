@@ -359,9 +359,7 @@
 
 .td-form-label .required { color: var(--cinnabar); }
 
-/* Câu gợi ý dưới ô nhập. Dùng cho những lựa chọn mà giá trị đúng phụ thuộc vào
-   ý định của người ra đề (đề luyện tập hay bài kiểm tra), chứ không phải cho mọi
-   trường — chú thích ở khắp nơi thì thành không ai đọc. */
+/* Câu gợi ý dưới ô nhập. Dùng cho những lựa chọn mà giá trị đúng phụ thuộc vào ý định của người ra đề (đề luyện tập hay bài kiểm tra) */
 .td-form-hint {
   margin: -2px 0 0;
   font-size: 11.5px;
@@ -427,14 +425,7 @@
   .td-stats-row { grid-template-columns: 1fr; }
 }
 
-/* ════════════════════════════════════════════════════════════════
-   LỚP TIÊN HIỆP — CỔNG GIÁO VIÊN
-   ────────────────────────────────────────────────────────────────
-   Cùng chất liệu với cổng thí sinh, nhưng màu chủ đạo là tử khí
-   (tím) thay vì ngọc bích. Hai khu vực phân biệt được bằng màu là
-   có ích thật, không chỉ để cho vui: người ra đề hay mở song song hai
-   tab và cần biết ngay mình đang ở bên nào.
-   ════════════════════════════════════════════════════════════════ */
+/* LỚP TIÊN HIỆP — CỔNG GIÁO VIÊN */
 
 .td-sidebar-logo h2,
 .td-topbar-left h1,

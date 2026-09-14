@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams , useLocation } from 'react-router-dom';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { HOME_BY_ROLE } from '../../utils/constants';
@@ -10,6 +10,8 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
+  // Lời nhắn từ trang đăng ký chuyển sang ("Đã tạo tài khoản…").
+  const notice = useLocation().state?.notice;
   // Lỗi do backend redirect về khi Google SSO thất bại: /login?error=...
   const [error, setError] = useState(searchParams.get('error'));
   const { login, loginWithGoogle } = useAuth();
@@ -21,7 +23,15 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const user = await login(email, password);
-      navigate(HOME_BY_ROLE[user.role] || '/', { replace: true });
+      const home = HOME_BY_ROLE[user.role] || '/';
+      // Quay lại trang đang mở trước khi bị đưa ra đăng nhập, nếu cùng khu vực vai trò.
+      let back = null;
+      try {
+        back = sessionStorage.getItem('returnTo');
+        sessionStorage.removeItem('returnTo');
+      } catch { /* không có storage */ }
+      const area = home.split('/')[1];
+      navigate(back && area && back.startsWith(`/${area}/`) ? back : home, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -43,6 +53,7 @@ const LoginPage = () => {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          {notice && !error && <div className="login-notice">{notice}</div>}
           {error && <div className="login-error">{error}</div>}
 
           <div className="input-group">
