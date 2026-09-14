@@ -7,17 +7,41 @@ export const ROLES = {
   STUDENT: 'STUDENT',
 };
 
-// Phải khớp enum QuestionType ở backend (MULTIPLE_CHOICE | ESSAY | MATCHING)
+// Phải khớp enum QuestionType ở backend.
 export const QUESTION_TYPES = {
   MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
+  SENTENCE_ORDERING: 'SENTENCE_ORDERING',
   ESSAY: 'ESSAY',
-  MATCHING: 'MATCHING',
 };
 
 export const QUESTION_TYPE_LABELS = {
   MULTIPLE_CHOICE: 'Trắc nghiệm',
-  ESSAY: 'Tự luận',
-  MATCHING: 'Nối đáp án',
+  SENTENCE_ORDERING: 'Sắp xếp câu (並べ替え)',
+  // Nói rõ giới hạn ngay trên nhãn.
+  ESSAY: 'Tự luận — chỉ dùng để luyện tập',
+};
+
+/** Kỹ năng JLPT của câu hỏi. */
+export const JLPT_SKILLS = {
+  VOCABULARY: 'VOCABULARY',
+  GRAMMAR: 'GRAMMAR',
+  READING: 'READING',
+  LISTENING: 'LISTENING',
+};
+
+export const JLPT_SKILL_LABELS = {
+  VOCABULARY: '文字・語彙 — Chữ Hán · Từ vựng',
+  GRAMMAR: '文法 — Ngữ pháp',
+  READING: '読解 — Đọc hiểu',
+  LISTENING: '聴解 — Nghe hiểu',
+};
+
+/** Bản ngắn, cho những chỗ chật như ô bảng và thẻ câu hỏi. */
+export const JLPT_SKILL_SHORT = {
+  VOCABULARY: '文字・語彙',
+  GRAMMAR: '文法',
+  READING: '読解',
+  LISTENING: '聴解',
 };
 
 // Câu tự luận không có đáp án chấm tự động — form ẩn phần đáp án
@@ -58,12 +82,7 @@ export const HOME_BY_ROLE = {
   [ROLES.STUDENT]: ROUTES.STUDENT_EXAMS,
 };
 
-// Nhãn tiếng Việt cho LessonType của backend (GRAMMAR | KANJI | VOCAB |
-// READING | LISTENING). Dùng ở cả trang khoá học của thí sinh lẫn màn duyệt
-// của quản trị viên, nên để ở đây thay vì export từ một file component.
-//
-// `cls` là hậu tố class CSS trong Study.css — mỗi loại một màu, vì loại bài
-// quyết định cách hiển thị chứ không phải nhãn trang trí.
+// Nhãn tiếng Việt cho LessonType của backend (GRAMMAR | KANJI | VOCAB | READING | LISTENING).
 export const LESSON_TYPE = {
   GRAMMAR:   { label: 'Ngữ pháp', cls: '' },
   KANJI:     { label: 'Chữ Hán',  cls: 'kanji' },

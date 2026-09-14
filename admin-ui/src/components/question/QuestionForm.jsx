@@ -1,16 +1,5 @@
 // src/components/question/QuestionForm.jsx
 // Form tạo / sửa câu hỏi. Dùng lại lớp CSS td-* của TeacherDashboard.css.
-//
-// Props:
-//   initialData — QuestionResponse khi sửa, null khi tạo mới
-//   onSubmit    — async (payload) => void; payload đúng dạng backend cần
-//   onCancel    — () => void
-//   submitting  — true để khoá nút trong lúc chờ API
-//
-// Quy tắc validate ở đây khớp với QuestionServiceImpl.validateAnswers():
-//   ESSAY            → không có đáp án
-//   MULTIPLE_CHOICE  → ít nhất 2 đáp án, đúng 1 đáp án đúng
-//   MATCHING         → ít nhất 2 đáp án, ít nhất 1 đáp án đúng
 
 import { useMemo, useState } from 'react';
 import { Plus, Trash2, X, Check, AlertCircle } from 'lucide-react';
@@ -19,16 +8,43 @@ import {
   QUESTION_TYPE_LABELS,
   TYPES_WITHOUT_ANSWERS,
   DIFFICULTY_LABELS,
+  JLPT_SKILL_LABELS,
 } from '../../utils/constants';
+import { mediaUrl, uploadAudio } from '../../services/engagementService';
 
 const EMPTY_ANSWER = () => ({ answerId: null, answerContent: '', correct: false });
 
-const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false }) => {
+const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false, passages = [] }) => {
   const [content, setContent] = useState(initialData?.content ?? '');
   const [questionType, setQuestionType] = useState(
     initialData?.questionType ?? QUESTION_TYPES.MULTIPLE_CHOICE
   );
   const [difficultyLevel, setDifficultyLevel] = useState(initialData?.difficultyLevel ?? 3);
+  // Kỹ năng JLPT. Để trống được vì ngân hàng còn nhiều câu cũ chưa phân loại.
+  const [skill, setSkill] = useState(initialData?.skill ?? '');
+  // Bài đọc: chỉ hỏi khi câu thuộc kỹ năng 読解. Hỏi ở mọi câu thì 90% số lần
+  // là một ô trống vô nghĩa ngay giữa form.
+  const [passageId, setPassageId] = useState(initialData?.passageId ?? '');
+  // File nghe cho câu 聴解: tải lên trước, server trả về đường dẫn để lưu cùng câu.
+  const [audioUrl, setAudioUrl] = useState(initialData?.audioUrl ?? '');
+  const [maxAudioPlays, setMaxAudioPlays] = useState(initialData?.maxAudioPlays ?? '');
+  const [uploading, setUploading] = useState(false);
+
+  const handleAudioFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const res = await uploadAudio(file);
+      setAudioUrl(res.url);
+    } catch (err) {
+      setError(err.message || 'Không tải được file nghe');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
   const [explanation, setExplanation] = useState(initialData?.explanation ?? '');
   const [answers, setAnswers] = useState(() => {
     const existing = initialData?.answers;
@@ -98,6 +114,12 @@ const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false }) =
       content: content.trim(),
       questionType,
       difficultyLevel: Number(difficultyLevel),
+      skill: skill || null,
+      // Chỉ câu đọc hiểu mới giữ bài đọc.
+      passageId: skill === 'READING' && passageId ? Number(passageId) : null,
+      // File nghe chỉ giữ cho câu 聴解, cùng lý do như bài đọc ở trên.
+      audioUrl: skill === 'LISTENING' && audioUrl ? audioUrl : null,
+      maxAudioPlays: skill === 'LISTENING' && maxAudioPlays !== '' ? Number(maxAudioPlays) : null,
       explanation: explanation.trim() || null,
       // ESSAY không có đáp án chấm tự động → gửi danh sách rỗng
       answers: needsAnswers
@@ -190,6 +212,70 @@ const QuestionForm = ({ initialData, onSubmit, onCancel, submitting = false }) =
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="td-form-row">
+              <div className="td-form-group">
+                <label className="td-form-label">Kỹ năng JLPT</label>
+                <select
+                  className="td-form-select"
+                  value={skill}
+                  onChange={(e) => setSkill(e.target.value)}
+                >
+                  <option value="">— Chưa phân loại —</option>
+                  {Object.entries(JLPT_SKILL_LABELS).map(([code, label]) => (
+                    <option key={code} value={code}>{label}</option>
+                  ))}
+                </select>
+                <p className="td-form-hint">
+                  Quyết định câu này được cộng vào ô nào trên bảng điểm quy đổi.
+                  Đề thi thử chấm theo thang JLPT chỉ nhận câu đã có kỹ năng.
+                </p>
+              </div>
+
+              {skill === 'READING' && (
+                <div className="td-form-group">
+                  <label className="td-form-label">Bài đọc</label>
+                  <select
+                    className="td-form-select"
+                    value={passageId}
+                    onChange={(e) => setPassageId(e.target.value)}
+                  >
+                    <option value="">— Không gắn bài đọc —</option>
+                    {(passages ?? []).map((psg) => (
+                      <option key={psg.passageId} value={psg.passageId}>
+                        {psg.title || `Bài đọc #${psg.passageId}`} ({psg.questionCount} câu)
+                      </option>
+                    ))}
+                  </select>
+                  <p className="td-form-hint">
+                    Nhiều câu cùng trỏ vào một bài đọc thì thí sinh chỉ thấy đoạn văn
+                    một lần — không phải đọc lại ở từng câu.
+                  </p>
+                </div>
+              )}
+
+              {skill === 'LISTENING' && (
+                <div className="td-form-group">
+                  <label className="td-form-label">File nghe</label>
+                  <input type="file" accept=".mp3,.m4a,.wav,.ogg,audio/*"
+                         onChange={handleAudioFile} disabled={uploading} />
+                  {uploading && <p className="td-form-hint">Đang tải lên…</p>}
+                  {audioUrl && !uploading && (
+                    <audio controls src={mediaUrl(audioUrl)} style={{ width: '100%', marginTop: 6 }} />
+                  )}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                    <span style={{ fontSize: 12.5 }}>Số lần được nghe</span>
+                    <input className="td-form-input" type="number" min="1" max="5" style={{ width: 80 }}
+                           placeholder="1" value={maxAudioPlays}
+                           onChange={(e) => setMaxAudioPlays(e.target.value)} />
+                  </div>
+                  <p className="td-form-hint">
+                    Để trống = 1 lần, đúng như kỳ thi thật. Thí sinh không tua được, và
+                    server đếm lượt nên tải lại trang cũng không nghe thêm được.
+                  </p>
+                </div>
+              )}
             </div>
 
             {needsAnswers ? (

@@ -41,7 +41,7 @@ Mật khẩu tất cả là `demo1234` (dữ liệu mẫu do backend nạp sẵn
 |---|---|---|
 | Thí sinh | `student1@demo.local` | Khoá học · Thẻ ghi nhớ · Sổ tay câu sai · Phòng thi · Đề tự do |
 | Người ra đề | `teacher@demo.local` | Quản lý đề thi · Phòng thi · Khoá học · Ngân hàng câu hỏi |
-| Quản trị viên | `admin@demo.local` | Hàng đợi duyệt khoá học |
+| Quản trị viên | `admin@demo.local` | Tổng quan hệ thống · Người dùng (đổi vai trò, khoá / mở khoá) · Duyệt khoá học |
 
 ---
 

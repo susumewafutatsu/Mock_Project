@@ -1,26 +1,32 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, FileText, BookOpen, Users, BarChart2,
   Plus, Search, Bell, LogOut, ChevronRight, Clock,
   CheckCircle2, X, Calendar, Hash, Timer,
   ClipboardList, Edit3, Trash2, School, Loader2, AlertCircle, GraduationCap,
-  RotateCcw, Eye,
+  RotateCcw, Eye, Layers,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import QuestionBank from './QuestionBank';
 import RoomManager from './RoomManager';
 import CourseManager from './CourseManager';
+import TeacherOverview from './TeacherOverview';
+import StudentsView from './StudentsView';
+import ResultView from './ResultView';
+import ExamSectionEditor from './ExamSectionEditor';
+import NotificationBell from '../../components/common/NotificationBell';
 import roomService from '../../services/roomService';
 import * as questionService from '../../services/questionService';
 import * as teacherExamService from '../../services/teacherExamService';
+import { DIFFICULTY_LABELS, QUESTION_TYPE_LABELS } from '../../utils/constants';
 import './TeacherDashboard.css';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-  { id: 'exams',     label: 'Quản lý đề thi', icon: FileText },
+  { id: 'exams',     label: 'Đề luyện thi', icon: FileText },
   { id: 'rooms',     label: 'Phòng thi', icon: School },
-  { id: 'courses',   label: 'Khoá học', icon: GraduationCap },
+  { id: 'courses',   label: 'Lộ trình ôn tập', icon: GraduationCap },
   { id: 'questions', label: 'Ngân hàng câu hỏi', icon: BookOpen },
   { id: 'students',  label: 'Thí sinh', icon: Users },
   { id: 'results',   label: 'Kết quả & Phân tích', icon: BarChart2 },
@@ -29,9 +35,9 @@ const NAV_ITEMS = [
 // Nhãn tiếng Việt cho TeacherExamResponse.Status của backend
 const STATUS_LABELS = {
   NO_QUESTIONS: 'Chưa có câu hỏi',
-  UPCOMING: 'Sắp diễn ra',
+  UPCOMING: 'Sắp mở',
   OPEN: 'Đang mở',
-  CLOSED: 'Đã kết thúc',
+  CLOSED: 'Đã đóng',
 };
 
 const STATUS_CLASSES = {
@@ -106,16 +112,22 @@ function Toast({ message, type, onClose }) {
   );
 }
 
-// ─── Question picker ──────────────────────────────────────────
-// Chọn câu hỏi từ ngân hàng. Dùng chung cho form tạo/sửa đề và modal gắn thêm
-// câu hỏi vào đề đã có. Tự quản lý việc tải ngân hàng + câu hỏi, chỉ báo ra
-// ngoài danh sách questionId đang được tick.
+// ─ Question picker Chọn câu hỏi từ ngân hàng.
+const ALL_BANKS = 'all';
+
 function QuestionPicker({ selected, onChange, levelId, hint }) {
   const [banks, setBanks] = useState([]);
+  const [levelFilter, setLevelFilter] = useState('');
   const [bankId, setBankId] = useState('');
+  const [difficulty, setDifficulty] = useState(null); // null = mọi mức độ
+  const [typeFilter, setTypeFilter] = useState('');
+  const [keyword, setKeyword] = useState('');
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Mọi câu đã từng tải, theo id — để tóm tắt các câu đã chọn theo mức độ kể cả
+  // khi chúng nằm ở bộ khác bộ đang xem.
+  const [known, setKnown] = useState({});
 
   useEffect(() => {
     let alive = true;
@@ -125,12 +137,11 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
         const data = (await questionService.getMyBanks()) ?? [];
         if (!alive) return;
         setBanks(data);
-        // Ưu tiên ngân hàng cùng trình độ với đề, không có thì lấy cái đầu tiên.
-        const preferred = levelId
-          ? data.find(b => String(b.levelId) === String(levelId))
-          : null;
-        const pick = preferred ?? data[0];
-        if (pick) setBankId(String(pick.bankId));
+        // Mặc định lọc theo trình độ của đề.
+        const sameLevel = levelId && data.some(b => String(b.levelId) === String(levelId));
+        setLevelFilter(sameLevel ? String(levelId) : '');
+        const first = sameLevel ? data.find(b => String(b.levelId) === String(levelId)) : data[0];
+        if (first) setBankId(String(first.bankId));
       } catch (err) {
         if (alive) setError(err.message || 'Không tải được ngân hàng câu hỏi');
       } finally {
@@ -138,20 +149,45 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
       }
     })();
     return () => { alive = false; };
-    // levelId chỉ dùng để đoán ngân hàng mặc định lần đầu, đổi trình độ giữa
-    // form không nên nhảy ngân hàng và mất các câu đã tick.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // levelId chỉ dùng để chọn bộ lọc mặc định lần đầu.
   }, []);
 
+  const levelOptions = useMemo(() => {
+    const seen = new Map();
+    for (const b of banks) {
+      if (b.levelId != null && !seen.has(String(b.levelId))) {
+        seen.set(String(b.levelId), b.levelName ?? `Trình độ ${b.levelId}`);
+      }
+    }
+    return [...seen.entries()];
+  }, [banks]);
+
+  const banksShown = useMemo(
+    () => (levelFilter ? banks.filter(b => String(b.levelId) === levelFilter) : banks),
+    [banks, levelFilter],
+  );
+
+  const changeLevel = (value) => {
+    setLevelFilter(value);
+    const pool = value ? banks.filter(b => String(b.levelId) === value) : banks;
+    setBankId(pool.length > 1 ? ALL_BANKS : pool[0] ? String(pool[0].bankId) : '');
+  };
+
   useEffect(() => {
-    if (!bankId) { setQuestions([]); return; }
+    const ids = bankId === ALL_BANKS ? banksShown.map(b => b.bankId) : bankId ? [bankId] : [];
+    if (ids.length === 0) { setQuestions([]); return; }
     let alive = true;
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const page = await questionService.getQuestions(bankId, { page: 0, size: 200 });
-        if (alive) setQuestions(page?.content ?? []);
+        const pages = await Promise.all(
+          ids.map(id => questionService.getQuestions(id, { page: 0, size: 200 })),
+        );
+        if (!alive) return;
+        const list = pages.flatMap(p => p?.content ?? []);
+        setQuestions(list);
+        setKnown(prev => ({ ...prev, ...Object.fromEntries(list.map(q => [q.questionId, q])) }));
       } catch (err) {
         if (alive) setError(err.message || 'Không tải được câu hỏi');
       } finally {
@@ -159,14 +195,45 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
       }
     })();
     return () => { alive = false; };
-  }, [bankId]);
+  }, [bankId, banksShown]);
+
+  // Số câu theo từng mức độ TRƯỚC khi lọc mức độ, để nút lọc nói trước sẽ còn bao nhiêu câu.
+  const typeAndKeywordMatched = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    return questions.filter(q =>
+      // Câu tự luận không vào đề thi được (JLPT không có dạng này, và hệ thống chưa có ai chấm nó — bài sẽ nằm mãi ở "chờ chấm").
+      q.questionType !== 'ESSAY'
+      && (!typeFilter || q.questionType === typeFilter)
+      && (!kw || (q.content ?? '').toLowerCase().includes(kw)));
+  }, [questions, typeFilter, keyword]);
+
+  const difficultyCounts = useMemo(() => {
+    const counts = {};
+    for (const q of typeAndKeywordMatched) {
+      counts[q.difficultyLevel] = (counts[q.difficultyLevel] ?? 0) + 1;
+    }
+    return counts;
+  }, [typeAndKeywordMatched]);
+
+  const shown = difficulty == null
+    ? typeAndKeywordMatched
+    : typeAndKeywordMatched.filter(q => q.difficultyLevel === difficulty);
+
+  const selectedByDifficulty = useMemo(() => {
+    const counts = {};
+    for (const id of selected) {
+      const d = known[id]?.difficultyLevel;
+      if (d != null) counts[d] = (counts[d] ?? 0) + 1;
+    }
+    return counts;
+  }, [selected, known]);
 
   const toggle = (questionId) =>
     onChange(selected.includes(questionId)
       ? selected.filter(id => id !== questionId)
       : [...selected, questionId]);
 
-  const allShownIds = questions.map(q => q.questionId);
+  const allShownIds = shown.map(q => q.questionId);
   const allShownPicked = allShownIds.length > 0 && allShownIds.every(id => selected.includes(id));
 
   const toggleAll = () =>
@@ -174,26 +241,55 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
       ? selected.filter(id => !allShownIds.includes(id))
       : [...new Set([...selected, ...allShownIds])]);
 
+  const chip = (active) => ({
+    padding: '5px 11px', borderRadius: 999, fontSize: 12.5, cursor: 'pointer',
+    fontFamily: 'inherit', whiteSpace: 'nowrap',
+    border: `1px solid ${active ? 'var(--violet)' : 'var(--line-strong)'}`,
+    background: active ? 'var(--violet-wash)' : 'var(--paper-raised)',
+    color: active ? 'var(--violet)' : 'var(--ink-soft)',
+    fontWeight: active ? 600 : 400,
+  });
+
   return (
     <>
       <div className="td-form-group full">
         <label className="td-form-label">
           <BookOpen size={14} /> Lấy câu hỏi từ ngân hàng
         </label>
-        <select
-          className="td-form-select"
-          value={bankId}
-          onChange={(e) => setBankId(e.target.value)}
-          disabled={banks.length === 0}
-        >
-          {banks.length === 0 && <option value="">Chưa có ngân hàng nào</option>}
-          {banks.map(b => (
-            <option key={b.bankId} value={b.bankId}>
-              {b.title} ({b.totalQuestions} câu)
-              {b.levelName ? ` · ${b.levelName}` : ''}
-            </option>
-          ))}
-        </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 10 }}>
+          <select
+            className="td-form-select"
+            value={levelFilter}
+            onChange={(e) => changeLevel(e.target.value)}
+            disabled={banks.length === 0}
+            aria-label="Lọc theo trình độ"
+          >
+            <option value="">Mọi trình độ</option>
+            {levelOptions.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+          <select
+            className="td-form-select"
+            value={bankId}
+            onChange={(e) => setBankId(e.target.value)}
+            disabled={banksShown.length === 0}
+            aria-label="Bộ câu hỏi"
+          >
+            {banksShown.length === 0 && <option value="">Chưa có bộ câu hỏi nào</option>}
+            {banksShown.length > 1 && (
+              <option value={ALL_BANKS}>
+                Tất cả {banksShown.length} bộ ({banksShown.reduce((n, b) => n + (b.totalQuestions ?? 0), 0)} câu)
+              </option>
+            )}
+            {banksShown.map(b => (
+              <option key={b.bankId} value={b.bankId}>
+                {b.title} ({b.totalQuestions} câu)
+                {!levelFilter && b.levelName ? ` · ${b.levelName}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
         {hint && (
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--ink-faint)', lineHeight: 1.5 }}>
             {hint}
@@ -202,16 +298,55 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
       </div>
 
       <div className="td-form-group full">
+        <label className="td-form-label">Mức độ</label>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }} role="radiogroup" aria-label="Lọc theo mức độ">
+          <button type="button" role="radio" aria-checked={difficulty == null}
+                  style={chip(difficulty == null)} onClick={() => setDifficulty(null)}>
+            Mọi mức độ · {typeAndKeywordMatched.length}
+          </button>
+          {Object.entries(DIFFICULTY_LABELS).map(([level, label]) => {
+            const n = difficultyCounts[level] ?? 0;
+            const active = difficulty === Number(level);
+            return (
+              <button key={level} type="button" role="radio" aria-checked={active}
+                      style={{ ...chip(active), opacity: n === 0 && !active ? 0.5 : 1 }}
+                      onClick={() => setDifficulty(active ? null : Number(level))}>
+                {label} · {n}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 10, marginTop: 10 }}>
+          <select className="td-form-select" value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)} aria-label="Lọc theo dạng câu">
+            <option value="">Mọi dạng câu</option>
+            {Object.entries(QUESTION_TYPE_LABELS).map(([t, label]) => (
+              <option key={t} value={t}>{label}</option>
+            ))}
+          </select>
+          <input className="td-form-input" type="search" value={keyword}
+                 onChange={(e) => setKeyword(e.target.value)}
+                 placeholder="Tìm trong nội dung câu hỏi" aria-label="Tìm câu hỏi" />
+        </div>
+      </div>
+
+      <div className="td-form-group full">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 8,
+          gap: 12, marginBottom: 8,
         }}>
           <span style={{ fontSize: 12.5, color: 'var(--ink-mute)' }}>
             Đã chọn <strong style={{ color: 'var(--violet)' }}>{selected.length}</strong> câu
+            {Object.keys(selectedByDifficulty).length > 0 && (
+              <> — {Object.entries(selectedByDifficulty)
+                .sort(([a], [b]) => a - b)
+                .map(([d, n]) => `${n} ${(DIFFICULTY_LABELS[d] ?? '').toLowerCase()}`)
+                .join(' · ')}</>
+            )}
           </span>
-          {questions.length > 0 && (
+          {shown.length > 0 && (
             <button type="button" className="td-btn-ghost" onClick={toggleAll}>
-              {allShownPicked ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+              {allShownPicked ? `Bỏ chọn ${shown.length} câu đang lọc` : `Chọn ${shown.length} câu đang lọc`}
             </button>
           )}
         </div>
@@ -228,10 +363,15 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
           )}
           {!loading && banks.length > 0 && questions.length === 0 && (
             <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-faint)' }}>
-              Ngân hàng này chưa có câu hỏi nào.
+              Bộ câu hỏi này chưa có câu nào.
             </p>
           )}
-          {!loading && questions.map(q => (
+          {!loading && questions.length > 0 && shown.length === 0 && (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-faint)' }}>
+              Không có câu nào khớp bộ lọc. Thử đổi mức độ hoặc dạng câu.
+            </p>
+          )}
+          {!loading && shown.map(q => (
             <label key={q.questionId} style={{
               display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer',
               padding: '10px 12px', borderRadius: 8,
@@ -248,7 +388,8 @@ function QuestionPicker({ selected, onChange, levelId, hint }) {
               <span style={{ flex: 1, fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5 }}>
                 {q.content}
                 <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-mute)', marginTop: 3 }}>
-                  {q.questionType} · độ khó {q.difficultyLevel ?? '—'}
+                  {QUESTION_TYPE_LABELS[q.questionType] ?? q.questionType}
+                  {' · '}{DIFFICULTY_LABELS[q.difficultyLevel] ?? 'chưa đặt mức độ'}
                   {q.usedInExam ? ' · đã dùng trong đề khác' : ''}
                 </span>
               </span>
@@ -280,16 +421,16 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
     endDate: end.date,
     endTime: end.time,
     adaptive: initial?.adaptive ?? false,
-    // Chuỗi rỗng = không giới hạn. Giữ nguyên dạng chuỗi suốt thời gian ở trong
-    // form (input number trả về chuỗi), chỉ đổi sang số/null lúc gửi đi.
+    // Chuỗi rỗng = không giới hạn.
     maxAttempts: initial?.maxAttempts == null ? '' : String(initial.maxAttempts),
-    // Đề mới mặc định cho xem đáp án: với nền tảng ôn tập thì phần giải thích là
-    // chỗ thí sinh học được nhiều nhất, tắt phải là một quyết định có chủ ý.
+    // Đề mới mặc định cho xem đáp án.
     allowReview: initial?.allowReview ?? true,
+    isPlacement: initial?.isPlacement ?? false,
+    shuffleQuestions: initial?.shuffleQuestions ?? false,
+    shuffleOptions: initial?.shuffleOptions ?? false,
   });
   const [error, setError] = useState(null);
-  // Câu hỏi tick trong form. Đề được tạo xong sẽ gắn luôn các câu này, để không
-  // rơi vào trạng thái NO_QUESTIONS (thí sinh không vào thi được).
+  // Câu hỏi tick trong form. Đề được tạo xong sẽ gắn luôn các câu này.
   const [picked, setPicked] = useState([]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -306,11 +447,8 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
     const startAt = teacherExamService.toLocalDateTime(form.startDate, form.startTime);
     const endAt = teacherExamService.toLocalDateTime(form.endDate, form.endTime);
 
-    if (!startAt || !endAt) {
-      setError('Cần nhập cả thời gian mở đề và đóng đề.');
-      return;
-    }
-    if (new Date(endAt) <= new Date(startAt)) {
+    // Khung giờ để trống được. Đề tự do đúng ra KHÔNG nên có ngày đóng.
+    if (startAt && endAt && new Date(endAt) <= new Date(startAt)) {
       setError('Thời gian đóng đề phải sau thời gian mở đề.');
       return;
     }
@@ -322,8 +460,7 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
 
     onSave({
       title: form.title.trim(),
-      // Công khai = mọi thí sinh làm được. Không công khai thì bài thi chỉ tới
-      // được với thí sinh khi người ra đề gắn nó vào một phòng.
+      // Công khai = mọi thí sinh làm được.
       isPublic: form.isPublic,
       levelId: Number(form.levelId),
       durationMinutes: Number(form.durationMinutes),
@@ -334,6 +471,9 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
       // biệt "không đặt trần" với một con số cụ thể.
       maxAttempts: form.maxAttempts === '' ? null : Number(form.maxAttempts),
       allowReview: form.allowReview,
+      isPlacement: form.isPlacement,
+      shuffleQuestions: form.shuffleQuestions,
+      shuffleOptions: form.shuffleOptions,
     }, picked);
   };
 
@@ -392,12 +532,7 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
                 </select>
               </div>
 
-              {/* Thời còn lớp học, chỗ này là dropdown "Lớp áp dụng" — tạo bài
-                  thi và giao bài thi là một thao tác. Giờ chúng tách đôi: ở đây
-                  chỉ quyết định bài thi có công khai hay không, còn việc giao
-                  cho ai thì sang tab Phòng thi mà gắn. Tách ra vì một bài thi
-                  giờ gắn được vào nhiều phòng, nên "nơi áp dụng" không còn là
-                  một thuộc tính của bài thi nữa. */}
+              {/* Thời còn lớp học, chỗ này là dropdown "Lớp áp dụng" — tạo bài thi và giao bài thi là một thao tác. */}
               <div className="td-form-group">
                 <label className="td-form-label">
                   <Users size={14} /> Phạm vi
@@ -481,38 +616,90 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
             <div className="td-form-row">
               <div className="td-form-group">
                 <label className="td-form-label">
-                  <Calendar size={14} /> Mở đề lúc <span className="required">*</span>
+                  <RotateCcw size={14} /> Xáo đề theo từng lượt
                 </label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    className="td-form-input" type="date" required
-                    value={form.startDate}
-                    onChange={(e) => set('startDate', e.target.value)}
-                  />
-                  <input
-                    className="td-form-input" type="time" required
-                    value={form.startTime}
-                    onChange={(e) => set('startTime', e.target.value)}
-                  />
-                </div>
+                <select
+                  className="td-form-select"
+                  value={form.shuffleQuestions ? (form.shuffleOptions ? 'both' : 'questions') : (form.shuffleOptions ? 'options' : 'none')}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    set('shuffleQuestions', v === 'both' || v === 'questions');
+                    set('shuffleOptions', v === 'both' || v === 'options');
+                  }}
+                >
+                  <option value="none">Không xáo</option>
+                  <option value="options">Chỉ xáo đáp án</option>
+                  <option value="questions">Chỉ xáo thứ tự câu</option>
+                  <option value="both">Xáo cả câu và đáp án</option>
+                </select>
+                <p className="td-form-hint">
+                  Mỗi lượt làm một thứ tự riêng, chống chép kiểu "câu 3 chọn C". Câu cùng bài
+                  đọc vẫn đứng liền nhau. Đề hay chữa chung theo số câu thì nên để không xáo.
+                </p>
               </div>
 
               <div className="td-form-group">
                 <label className="td-form-label">
-                  <Clock size={14} /> Đóng đề lúc <span className="required">*</span>
+                  <GraduationCap size={14} /> Bài xếp trình độ
+                </label>
+                <select
+                  className="td-form-select"
+                  value={form.isPlacement ? 'yes' : 'no'}
+                  onChange={(e) => set('isPlacement', e.target.value === 'yes')}
+                >
+                  <option value="no">Không</option>
+                  <option value="yes">Dùng làm bài xếp trình độ đầu vào</option>
+                </select>
+                <p className="td-form-hint">
+                  Trộn câu từ nhiều cấp (N5→N1) và để công khai. Học viên làm xong sẽ được gợi ý
+                  nên bắt đầu ôn từ cấp nào, dựa trên tỉ lệ đúng theo từng cấp.
+                </p>
+              </div>
+            </div>
+
+            <div className="td-form-row">
+              <div className="td-form-group">
+                <label className="td-form-label">
+                  <Calendar size={14} /> Mở đề lúc
                 </label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input
-                    className="td-form-input" type="date" required
+                    className="td-form-input" type="date"
+                    value={form.startDate}
+                    onChange={(e) => set('startDate', e.target.value)}
+                  />
+                  <input
+                    className="td-form-input" type="time"
+                    value={form.startTime}
+                    onChange={(e) => set('startTime', e.target.value)}
+                  />
+                </div>
+                <p className="td-form-hint">
+                  Để trống = mở ngay. Đề công khai nên để trống cả hai ô giờ cho thí
+                  sinh luyện bất cứ lúc nào.
+                </p>
+              </div>
+
+              <div className="td-form-group">
+                <label className="td-form-label">
+                  <Clock size={14} /> Đóng đề lúc
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    className="td-form-input" type="date"
                     value={form.endDate}
                     onChange={(e) => set('endDate', e.target.value)}
                   />
                   <input
-                    className="td-form-input" type="time" required
+                    className="td-form-input" type="time"
                     value={form.endTime}
                     onChange={(e) => set('endTime', e.target.value)}
                   />
                 </div>
+                <p className="td-form-hint">
+                  Để trống = không tự đóng. Đề gắn vào phòng thi thì giờ kết thúc do
+                  phòng quyết định, đặt ở đây chỉ thêm một cái hạn thứ hai.
+                </p>
               </div>
             </div>
 
@@ -556,9 +743,7 @@ function ExamFormModal({ initial, levels, catalogLoading, onClose, onSave, savin
   );
 }
 
-// ─── Attach Questions Modal ───────────────────────────────────
-// Đề mới tạo ở trạng thái NO_QUESTIONS, thí sinh chưa vào thi được cho tới khi
-// có ít nhất một câu hỏi. Modal này chọn câu từ ngân hàng rồi POST snapshot.
+// ─ Attach Questions Modal Đề mới tạo ở trạng thái NO_QUESTIONS.
 function AttachQuestionsModal({ exam, onClose, onDone }) {
   const [selected, setSelected] = useState([]); // questionId[]
   const [saving, setSaving] = useState(false);
@@ -638,6 +823,7 @@ export default function TeacherDashboard() {
   const goTo = (tabId) => navigate(`/teacher/${tabId}`, { replace: false });
 
   const [exams, setExams] = useState([]);
+  const [sectionExam, setSectionExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -647,6 +833,8 @@ export default function TeacherDashboard() {
   const [attachExam, setAttachExam] = useState(null); // đề đang gắn câu hỏi
   const [saving, setSaving] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
+  // Ô tìm trên thanh trên lọc ngay bảng đề — trước đây nó là một cái hộp không bấm được.
+  const [keyword, setKeyword] = useState('');
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
@@ -663,8 +851,7 @@ export default function TeacherDashboard() {
     }
   }, []);
 
-  // Lớp + trình độ dùng cho form tạo/sửa đề. Trình độ phải lấy từ API vì
-  // LevelID phải tồn tại thật trong DB, backend sẽ từ chối nếu không.
+  // Lớp + trình độ dùng cho form tạo/sửa đề.
   const loadCatalog = useCallback(async () => {
     try {
       setCatalogLoading(true);
@@ -686,10 +873,7 @@ export default function TeacherDashboard() {
 
   const handleLogout = () => { logout(); navigate('/login', { replace: true }); };
 
-  // payload = thông tin đề, questionIds = câu hỏi tick trong form. Đề và câu hỏi
-  // là 2 endpoint riêng (Exams không có cột BankID, câu hỏi vào đề qua snapshot
-  // ExamQuestions) nên phải gọi 2 lượt; nếu bước gắn câu lỗi thì đề vẫn đã tạo,
-  // phải nói rõ để người ra đề vào sửa đề gắn lại chứ không tạo đề mới.
+  // payload = thông tin đề, questionIds = câu hỏi tick trong form.
   const handleSave = async (payload, questionIds = []) => {
     try {
       setSaving(true);
@@ -739,43 +923,51 @@ export default function TeacherDashboard() {
     }
   };
 
-  const filteredExams = filterStatus === 'all'
-    ? exams
-    : exams.filter(e => e.status === filterStatus);
+  const filteredExams = exams
+    .filter(e => filterStatus === 'all' || e.status === filterStatus)
+    .filter(e => !keyword.trim()
+      || (e.title ?? '').toLowerCase().includes(keyword.trim().toLowerCase()));
 
   const stats = [
     {
-      label: 'Tổng đề thi', value: exams.length, sub: 'Do bạn tạo',
+      label: 'Đề luyện thi', value: exams.length, sub: 'Do bạn soạn',
       icon: '📋', color: 'rgba(124, 92, 191,0.15)',
     },
     {
-      label: 'Đang mở', value: exams.filter(e => e.status === 'OPEN').length, sub: 'Thí sinh đang làm',
+      label: 'Đang mở luyện', value: exams.filter(e => e.status === 'OPEN').length, sub: 'Thí sinh làm được ngay',
       icon: '🟢', color: 'rgba(47, 143, 111,0.15)',
     },
     {
-      label: 'Sắp diễn ra', value: exams.filter(e => e.status === 'UPCOMING').length, sub: 'Chưa tới giờ mở',
+      label: 'Sắp mở', value: exams.filter(e => e.status === 'UPCOMING').length, sub: 'Chưa tới giờ mở đề',
       icon: '⏰', color: 'rgba(201, 146, 46,0.15)',
     },
     {
-      label: 'Chưa có câu hỏi',
+      label: 'Đề chưa có câu hỏi',
       value: exams.filter(e => e.status === 'NO_QUESTIONS').length,
-      sub: 'Cần gắn câu hỏi',
-      icon: '⚠️', color: 'rgba(61, 126, 166,0.15)',
+      sub: 'Gắn câu hỏi thì thí sinh mới luyện được',
+      icon: '📝', color: 'rgba(61, 126, 166,0.15)',
     },
   ];
 
   const isQuestionTab = activeNav === 'questions';
   const isRoomTab     = activeNav === 'rooms';
   const isCourseTab   = activeNav === 'courses';
-  const isSpecialTab  = isQuestionTab || isRoomTab || isCourseTab;
+  const isOverviewTab = activeNav === 'dashboard';
+  const isStudentTab  = activeNav === 'students';
+  const isResultTab   = activeNav === 'results';
+  // "Đặc biệt" ở đây nghĩa là: màn tự lo phần thân của nó.
+  const isSpecialTab  = isQuestionTab || isRoomTab || isCourseTab
+                        || isOverviewTab || isStudentTab || isResultTab;
 
-  const topbarTitle = isQuestionTab
-    ? "Ngân hàng câu hỏi"
-    : isRoomTab
-      ? "Quản lý phòng thi"
-      : isCourseTab
-        ? "Khoá học"
-        : "Quản lý đề thi & Giao bài";
+  const TAB_TITLES = {
+    questions: "Ngân hàng câu hỏi",
+    rooms: "Quản lý phòng thi",
+    courses: "Lộ trình ôn tập",
+    dashboard: "Tổng quan",
+    students: "Thí sinh",
+    results: "Kết quả & Phân tích",
+  };
+  const topbarTitle = TAB_TITLES[activeNav] ?? "Đề luyện thi";
 
   const userName  = currentUser?.fullName || currentUser?.email || 'Người ra đề';
   const initials  = userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -830,11 +1022,18 @@ export default function TeacherDashboard() {
             <p>Xin chào, {userName.split(' ').slice(-1)[0]}! Hôm nay là thứ {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}.</p>
           </div>
           <div className="td-topbar-right">
-            <div className="td-search-box">
-              <Search size={15} />
-              <span>Tìm đề thi...</span>
-            </div>
-            <button className="td-icon-btn" title="Thông báo"><Bell size={17} /></button>
+            {!isSpecialTab && (
+              <div className="td-search-box">
+                <Search size={15} />
+                <input
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Tìm đề của bạn…"
+                  style={{ border: 'none', background: 'transparent', outline: 'none', font: 'inherit', width: 160 }}
+                />
+              </div>
+            )}
+            <NotificationBell buttonClass="td-icon-btn" />
             {!isSpecialTab && (
               <button className="td-btn-primary" onClick={() => setModalExam({})}>
                 <Plus size={16} /> Tạo bài thi
@@ -849,6 +1048,12 @@ export default function TeacherDashboard() {
           <div className="td-content"><RoomManager /></div>
         ) : isCourseTab ? (
           <div className="td-content"><CourseManager /></div>
+        ) : isOverviewTab ? (
+          <div className="td-content"><TeacherOverview onGo={goTo} /></div>
+        ) : isStudentTab ? (
+          <div className="td-content"><StudentsView /></div>
+        ) : isResultTab ? (
+          <div className="td-content"><ResultView /></div>
         ) : (
         <div className="td-content">
           {/* Stats */}
@@ -865,12 +1070,10 @@ export default function TeacherDashboard() {
             ))}
           </div>
 
-          {/* Main Grid */}
-          <div className="td-main-grid">
-            {/* Exam Table */}
+          {/* Bảng đề luyện thi — chiếm trọn chiều ngang */}
             <div className="td-section-card">
               <div className="td-section-header">
-                <h2>Danh sách đề thi</h2>
+                <h2>Đề luyện thi của bạn</h2>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {FILTERS.map(f => (
                     <button
@@ -908,7 +1111,7 @@ export default function TeacherDashboard() {
                   <thead>
                     <tr>
                       <th>Đề thi</th>
-                      <th>Lớp</th>
+                      <th>Phạm vi</th>
                       <th>Câu hỏi</th>
                       <th>Thời gian</th>
                       <th>Nộp bài</th>
@@ -936,9 +1139,7 @@ export default function TeacherDashboard() {
                           <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--ink-mute)', fontSize: 13 }}>
                             <Clock size={13} />{exam.durationMinutes} phút
                           </span>
-                          {/* Hai thiết lập quyết định đề này là bài kiểm tra hay
-                              đề ôn — nằm ngay dưới thời lượng để nhìn danh sách
-                              là phân biệt được, khỏi mở từng đề ra xem. */}
+                          {/* Hai thiết lập quyết định đề này là bài kiểm tra hay đề ôn. */}
                           <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--ink-mute)', fontSize: 11.5, marginTop: 3 }}>
                             <RotateCcw size={11} />
                             {exam.maxAttempts == null ? 'không giới hạn lượt' : `${exam.maxAttempts} lượt`}
@@ -963,6 +1164,10 @@ export default function TeacherDashboard() {
                               onClick={() => setAttachExam(exam)}>
                               <Plus size={14} /> Câu hỏi
                             </button>
+                            <button className="td-btn-ghost" title="Chia phần thi theo chuẩn JLPT"
+                              onClick={() => setSectionExam(exam)}>
+                              <Layers size={14} />
+                            </button>
                             <button className="td-btn-ghost" title="Chỉnh sửa"
                               onClick={() => setModalExam(exam)}>
                               <Edit3 size={14} />
@@ -979,91 +1184,6 @@ export default function TeacherDashboard() {
                 </table>
               )}
             </div>
-
-            {/* Quick Panel */}
-            <div>
-              <div className="td-section-card" style={{ marginBottom: 20 }}>
-                <div className="td-section-header"><h2>Thao tác nhanh</h2></div>
-                <div className="td-quick-panel">
-                  <button className="td-quick-btn" onClick={() => setModalExam({})}>
-                    <div className="td-quick-btn-icon" style={{ background: 'rgba(124, 92, 191,0.15)' }}>✨</div>
-                    <div className="td-quick-btn-body">
-                      <p className="td-quick-btn-title">Tạo bài thi mới</p>
-                      <p className="td-quick-btn-desc">Soạn đề, đặt thời lượng và số lượt làm</p>
-                    </div>
-                    <ChevronRight size={16} style={{ color: 'var(--ink-mute)' }} />
-                  </button>
-
-                  <button className="td-quick-btn" onClick={() => goTo('questions')}>
-                    <div className="td-quick-btn-icon" style={{ background: 'rgba(61, 126, 166,0.15)' }}>📝</div>
-                    <div className="td-quick-btn-body">
-                      <p className="td-quick-btn-title">Ngân hàng câu hỏi</p>
-                      <p className="td-quick-btn-desc">Thêm câu hỏi & gắn vào đề</p>
-                    </div>
-                    <ChevronRight size={16} style={{ color: 'var(--ink-mute)' }} />
-                  </button>
-
-                  <button className="td-quick-btn" onClick={() => goTo('rooms')}>
-                    <div className="td-quick-btn-icon" style={{ background: 'rgba(201, 146, 46,0.15)' }}>🏫</div>
-                    <div className="td-quick-btn-body">
-                      <p className="td-quick-btn-title">Quản lý phòng thi</p>
-                      <p className="td-quick-btn-desc">Mở phòng, đặt sức chứa, gắn bài thi</p>
-                    </div>
-                    <ChevronRight size={16} style={{ color: 'var(--ink-mute)' }} />
-                  </button>
-
-                  <button className="td-quick-btn" onClick={() => goTo('results')}>
-                    <div className="td-quick-btn-icon" style={{ background: 'rgba(47, 143, 111,0.15)' }}>📊</div>
-                    <div className="td-quick-btn-body">
-                      <p className="td-quick-btn-title">Xem kết quả</p>
-                      <p className="td-quick-btn-desc">Phân tích điểm số thí sinh</p>
-                    </div>
-                    <ChevronRight size={16} style={{ color: 'var(--ink-mute)' }} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Đề cần gắn câu hỏi */}
-              <div className="td-section-card">
-                <div className="td-section-header"><h2>Cần xử lý</h2></div>
-                <div style={{ padding: '12px 20px' }}>
-                  {(() => {
-                    const pending = exams.filter(e => e.status === 'NO_QUESTIONS');
-                    if (loading) {
-                      return <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-faint)' }}>Đang tải...</p>;
-                    }
-                    if (pending.length === 0) {
-                      return (
-                        <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-faint)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <CheckCircle2 size={15} style={{ color: 'var(--jade)' }} />
-                          Mọi đề thi đều đã có câu hỏi.
-                        </p>
-                      );
-                    }
-                    return pending.map((e, i) => (
-                      <div key={e.examId} style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0',
-                        borderBottom: i < pending.length - 1 ? '1px solid rgba(43, 38, 32, 0.05)' : 'none',
-                      }}>
-                        <span style={{ fontSize: 18, lineHeight: 1 }}>⚠️</span>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{e.title}</p>
-                          <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--ink-mute)' }}>
-                            Chưa có câu hỏi — thí sinh chưa vào thi được
-                          </p>
-                        </div>
-                        <button className="td-btn-ghost" title="Gắn câu hỏi"
-                          style={{ color: 'var(--gold)' }}
-                          onClick={() => setAttachExam(e)}>
-                          <Plus size={14} /> Gắn câu
-                        </button>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         )}
       </main>
@@ -1078,6 +1198,14 @@ export default function TeacherDashboard() {
           saving={saving}
           onClose={() => setModalExam(null)}
           onSave={handleSave}
+        />
+      )}
+
+      {sectionExam && (
+        <ExamSectionEditor
+          exam={sectionExam}
+          onClose={() => setSectionExam(null)}
+          onSaved={loadExams}
         />
       )}
 

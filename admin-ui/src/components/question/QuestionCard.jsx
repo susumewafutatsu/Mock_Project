@@ -1,6 +1,5 @@
 // src/components/question/QuestionCard.jsx
-// TODO: Display a single question with its answer choices
-// Props: question (object), onAnswer (fn), selectedAnswer (id), showCorrect (bool)
+// TODO: Display a single question with its answer choices Props.
 
 const QuestionCard = ({ question, onAnswer, selectedAnswer, showCorrect }) => {
   // TODO: Render question content and answer options

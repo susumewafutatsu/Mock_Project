@@ -1,20 +1,5 @@
 // src/pages/student/MistakeBook.jsx
 // Sổ tay câu sai — làm lại những câu đã từng làm sai.
-//
-// Ba quy ước của màn hình này:
-//
-// 1. Server chấm, không phải client. Danh sách trả về các lựa chọn nhưng KHÔNG
-//    kèm đáp án đúng, nên trước khi người học bấm thì trong trang không tồn tại
-//    thông tin nào để lộ. Đáp án đúng và lời giải chỉ tới cùng response của
-//    lần trả lời.
-//
-// 2. Đúng một lần chưa phải là thuộc. Phải đúng hai lần liên tiếp câu mới rời
-//    khỏi sổ tay — quy tắc đó nằm ở backend, ở đây chỉ hiển thị lại chuỗi đúng
-//    để người học biết mình còn cách bao xa.
-//
-// 3. Câu đã trả lời vẫn nằm nguyên chỗ cũ cho tới khi tải lại trang. Nếu nó
-//    biến mất ngay sau khi trả lời đúng thì các câu bên dưới nhảy lên và người
-//    học mất dấu chỗ mình đang đọc.
 
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -36,13 +21,7 @@ function formatWhen(value) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/**
- * Một câu trong sổ tay, tự quản lý trạng thái trả lời của riêng nó.
- *
- * Tách thành component riêng để trả lời câu này không làm render lại cả trang —
- * và quan trọng hơn, để đáp án vừa hiện của câu này không bị xoá khi người học
- * trả lời câu khác.
- */
+/** Một câu trong sổ tay, tự quản lý trạng thái trả lời của riêng nó. */
 function MistakeCard({ entry, onAnswered }) {
   const [picked, setPicked] = useState(null);
   const [result, setResult] = useState(null);
@@ -102,13 +81,11 @@ function MistakeCard({ entry, onAnswered }) {
         )}
       </div>
 
-      {/* lang="ja" để trình duyệt chọn đúng glyph chữ Hán Nhật; đề thi tiếng
-          Nhật lẫn cả tiếng Việt nên vẫn dùng font mặc định cho phần Việt. */}
+      {/* lang="ja" để trình duyệt chọn đúng glyph chữ Hán Nhật. */}
       <p className="st-question jp" lang="ja">{entry.content}</p>
 
       {isEssay ? (
-        // Tự luận không có đáp án để máy so — người học tự chấm. Đây là ôn tập
-        // cá nhân, không tính điểm, nên tự đánh giá không hại ai ngoài chính mình.
+        // Tự luận không có đáp án để máy so — người học tự chấm.
         !answered && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className="st-btn" disabled={sending}
@@ -183,12 +160,7 @@ export default function MistakeBook() {
 
   useEffect(() => { load(page); }, [load, page]);
 
-  /**
-   * Cập nhật con số tổng ngay sau khi trả lời, không đợi tải lại trang.
-   *
-   * Chỉ sửa mấy con số ở đầu trang chứ không bỏ câu ra khỏi danh sách: xem
-   * chú thích số 3 ở đầu file.
-   */
+  /** Cập nhật con số tổng ngay sau khi trả lời, không đợi tải lại trang. */
   const handleAnswered = (result) => {
     setBook((prev) => prev && {
       ...prev,

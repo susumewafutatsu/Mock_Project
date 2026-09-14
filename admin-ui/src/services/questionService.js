@@ -1,12 +1,5 @@
 // src/services/questionService.js
 // Gọi API ngân hàng câu hỏi + câu hỏi của người ra đề.
-//
-// Đường dẫn lồng theo ngân hàng (/question-banks/{bankId}/questions) chứ không
-// phải ?bankId=... — backend dùng bankId trong path để kiểm tra quyền sở hữu
-// ngân hàng trước khi cho thao tác với câu hỏi bên trong.
-//
-// Mọi endpoint trả về ApiResponse<T> = { success, message, data, error } nên
-// giá trị thật luôn nằm ở data.data.
 
 import api from './api';
 
@@ -26,10 +19,7 @@ export async function createBank(payload) {
 
 // ── Câu hỏi trong ngân hàng ──────────────────────────────────────────
 
-/**
- * Danh sách câu hỏi trong một ngân hàng (phân trang phía server).
- * @returns Page<QuestionResponse> — { content, totalElements, totalPages, number, size }
- */
+/** Danh sách câu hỏi trong một ngân hàng (phân trang phía server). */
 export async function getQuestions(bankId, { page = 0, size = 20, sort } = {}) {
   const params = { page, size };
   if (sort) params.sort = sort;
@@ -42,22 +32,13 @@ export async function getQuestion(bankId, questionId) {
   return data.data;
 }
 
-/**
- * Tạo câu hỏi.
- * @param payload { content, questionType, difficultyLevel, explanation,
- *                  answers: [{ answerContent, correct }] }
- */
+/** Tạo câu hỏi. */
 export async function createQuestion(bankId, payload) {
   const { data } = await api.post(`/teacher/question-banks/${bankId}/questions`, payload);
   return data.data;
 }
 
-/**
- * Sửa câu hỏi. Không bị chặn dù câu hỏi đã nằm trong đề đã phát hành: mỗi đề
- * giữ snapshot riêng, nên điểm đã chấm không thay đổi.
- * Đáp án có answerId sẽ được cập nhật, không có answerId là thêm mới,
- * đáp án bị bỏ khỏi danh sách sẽ bị xoá.
- */
+/** Sửa câu hỏi. Không bị chặn dù câu hỏi đã nằm trong đề đã phát hành. */
 export async function updateQuestion(bankId, questionId, payload) {
   const { data } = await api.put(
     `/teacher/question-banks/${bankId}/questions/${questionId}`,
@@ -73,20 +54,13 @@ export async function deleteQuestion(bankId, questionId) {
 
 // ── Câu hỏi trong đề thi (snapshot) ──────────────────────────────────
 
-/**
- * Gắn câu hỏi vào đề thi. Backend chụp snapshot nội dung + đáp án ngay lúc này.
- * @param selections [{ questionId, points?, questionOrder? }]
- * @returns { added } — số câu thực sự được thêm (câu đã có trong đề bị bỏ qua)
- */
+/** Gắn câu hỏi vào đề thi. Backend chụp snapshot nội dung + đáp án ngay lúc này. */
 export async function attachQuestionsToExam(examId, selections) {
   const { data } = await api.post(`/teacher/exams/${examId}/questions`, selections);
   return data.data;
 }
 
-/**
- * Cập nhật snapshot của một câu hỏi trong đề theo bản mới nhất trong ngân hàng.
- * Trả lỗi 409 nếu đề đã có thí sinh làm bài.
- */
+/** Cập nhật snapshot của một câu hỏi trong đề theo bản mới nhất trong ngân hàng. */
 export async function refreshExamQuestionSnapshot(examId, questionId) {
   await api.post(`/teacher/exams/${examId}/questions/${questionId}/refresh-snapshot`);
 }

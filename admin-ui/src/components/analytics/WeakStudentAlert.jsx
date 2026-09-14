@@ -1,6 +1,5 @@
 // src/components/analytics/WeakStudentAlert.jsx
-// TODO: Alert/badge component listing students at risk (below passing threshold)
-// Props: students (array of UserResponse), threshold (number, default 5.0)
+// TODO: Alert/badge component listing students at risk (below passing threshold) Props.
 
 const WeakStudentAlert = ({ students = [], threshold = 5.0 }) => {
   if (students.length === 0) return null;

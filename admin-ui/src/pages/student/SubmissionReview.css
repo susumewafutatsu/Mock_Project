@@ -1,15 +1,4 @@
-/* src/pages/student/SubmissionReview.css
-   Trang xem lại một bài đã nộp.
-
-   Bảng màu và nền lấy đúng theo StudentDashboard.css để hai trang không lệch
-   nhau; ở đây chỉ định nghĩa những thứ trang kia không có: thẻ từng câu hỏi,
-   các lựa chọn được tô theo đúng/sai, và lưới điều hướng câu.
-
-   Ba màu mang nghĩa cố định trong toàn trang, không dùng lẫn cho việc khác:
-     xanh lá  = đáp án đúng
-     đỏ       = lựa chọn sai của thí sinh
-     xanh dương = bài làm của thí sinh khi chưa biết đúng sai (tự luận chờ chấm,
-                  hoặc đề tắt xem đáp án) */
+/* src/pages/student/SubmissionReview.css Trang xem lại một bài đã nộp. */
 
 .sr-root {
   min-height: 100vh;
@@ -332,16 +321,7 @@
 .sr-spin { animation: sr-rotate 0.9s linear infinite; }
 @keyframes sr-rotate { to { transform: rotate(360deg); } }
 
-/* ════════════════════════════════════════════════════════════════
-   LỚP TIÊN HIỆP — XEM LẠI BÀI
-   ────────────────────────────────────────────────────────────────
-   Trang này ngược với phòng thi: thí sinh ở đây để ĐỌC lời giải,
-   không bị bấm giờ. Nên nó được phép trang trí nhiều hơn một chút —
-   nẹp kim tuyến ở đầu thẻ tổng kết, dấu triện ở nhãn đúng/sai.
-
-   Ba màu ngữ nghĩa khai báo ở đầu file vẫn giữ nguyên vai trò; phần
-   này chỉ đổi vật liệu, không đổi ý nghĩa màu.
-   ════════════════════════════════════════════════════════════════ */
+/* LỚP TIÊN HIỆP — XEM LẠI BÀI */
 
 .sr-title,
 .sr-score-tile b {
@@ -369,17 +349,14 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* Nhãn đúng/sai kiểu dấu triện: vuông bo nhẹ, có viền cùng màu chữ.
-   Trên nền giấy, mảng tô 14% một mình không đủ tách khỏi nền. */
+/* Nhãn đúng/sai kiểu dấu triện: vuông bo nhẹ, có viền cùng màu chữ. */
 .sr-q-verdict {
   border-radius: 6px;
   border: 1px solid currentColor;
   padding: 2px 8px;
 }
 
-/* Ô điều hướng: giữ hình vuông bo góc, thêm viền đậm hơn cho ô đã
-   có kết quả — lưới này phải đọc được bằng liếc mắt, không phải
-   bằng cách nhìn kỹ từng ô. */
+/* Ô điều hướng: giữ hình vuông bo góc, thêm viền đậm hơn cho ô đã có kết quả. */
 .sr-nav-cell {
   font-family: var(--heading);
   font-weight: 700;
@@ -392,9 +369,7 @@
   background: linear-gradient(135deg, var(--jade-lit), var(--jade-deep));
 }
 
-/* Lời giải: lùi vào sau một nét mực dọc, như phần chú giải viết tay
-   bên lề sách. Đây là chỗ đáng đọc nhất trang, nên nó được nền riêng
-   thay vì trôi lẫn vào thân thẻ. */
+/* Lời giải: lùi vào sau một nét mực dọc, như phần chú giải viết tay bên lề sách. */
 .sr-explain {
   border-left-color: var(--gold);
   border-left-width: 3px;
@@ -403,3 +378,25 @@
   padding: 10px 12px;
 }
 .sr-explain b { color: var(--gold-deep); }
+
+/* Nút đánh dấu câu — nằm cuối dòng tiêu đề câu hỏi. */
+.sr-mark {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid rgba(43, 38, 32, 0.14);
+  background: transparent;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--ink-soft, #5a5248);
+  cursor: pointer;
+}
+.sr-mark.on {
+  border-color: var(--gold, #c9922e);
+  background: rgba(201, 146, 46, 0.1);
+  color: var(--gold, #c9922e);
+  font-weight: 700;
+}

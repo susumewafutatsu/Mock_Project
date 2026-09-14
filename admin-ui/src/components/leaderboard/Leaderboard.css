@@ -1,0 +1,143 @@
+/* src/components/leaderboard/Leaderboard.css Bảng xếp hạng dùng chung. */
+
+.lb-root { display: flex; flex-direction: column; gap: 20px; }
+
+.lb-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--gold-wash);
+  color: var(--gold-deep);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.lb-board {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.lb-board-head {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.lb-board-head h3 {
+  margin: 0 0 8px;
+  font-family: var(--heading);
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.lb-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.lb-facts span { display: inline-flex; align-items: center; gap: 5px; }
+
+.lb-empty { margin: 0; padding: 20px; font-size: 13px; color: var(--ink-mute); }
+
+.lb-table-wrap { overflow-x: auto; }
+
+.lb-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.lb-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.lb-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-body);
+  vertical-align: middle;
+}
+.lb-table tbody tr:last-child td { border-bottom: none; }
+.lb-table th:first-child, .lb-table td:first-child { padding-left: 20px; width: 64px; }
+
+.lb-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lb-sub-inline { color: var(--ink-mute); font-size: 12px; }
+
+.lb-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+.lb-rank.none { color: var(--ink-faint); font-weight: 400; }
+/* Ba hạng đầu: huy chương là biểu tượng, số hạng vẫn là chữ — màu không đứng một mình. */
+.lb-rank.top { padding: 2px 8px; border-radius: 999px; }
+.lb-rank.top-1 { background: var(--gold-wash); color: var(--gold-deep); }
+.lb-rank.top-2 { background: rgba(140, 128, 113, 0.16); color: var(--ink-soft); }
+.lb-rank.top-3 { background: rgba(160, 98, 50, 0.12); color: #7a4a22; }
+
+.lb-name { font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.lb-sub { font-size: 11.5px; color: var(--ink-mute); margin-top: 2px; }
+
+.lb-me td { background: var(--jade-tint); }
+.lb-me td:first-child { box-shadow: inset 3px 0 0 var(--jade); }
+.lb-me-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--jade);
+  color: var(--on-jade);
+}
+
+.lb-muted td { color: var(--ink-mute); }
+.lb-muted .lb-name { color: var(--ink-soft); font-weight: 500; }
+
+.lb-gap td { text-align: center; color: var(--ink-faint); padding: 4px; }
+
+.lb-status {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.lb-status.done { background: var(--jade-wash); color: var(--jade-deep); }
+.lb-status.pending { background: var(--gold-wash); color: var(--gold-deep); }
+.lb-status.live { background: var(--azure-wash); color: var(--azure-deep); }
+.lb-status.none { background: rgba(140, 128, 113, 0.12); color: var(--ink-mute); }
+.lb-status.auto { background: none; border-color: var(--line-strong); color: var(--ink-mute); }
+
+.lb-action { text-align: right; white-space: nowrap; }
+.lb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--jade-deep);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lb-link:hover { background: var(--jade-wash); }
+
+@media (max-width: 640px) {
+  .lb-hide-sm { display: none; }
+}

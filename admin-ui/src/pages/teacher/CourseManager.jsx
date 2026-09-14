@@ -1,31 +1,22 @@
 // src/pages/teacher/CourseManager.jsx
-// Soạn khoá học — nơi người ra đề viết NGỮ PHÁP và CHỮ HÁN.
-//
-// Quy trình: soạn (Nháp) → gửi duyệt (Chờ duyệt) → Admin duyệt (Xuất bản)
-// hoặc trả lại kèm lý do (Bị trả lại → sửa → gửi lại).
-//
-// Hai điều màn hình này phải nói rõ, vì cả hai đều do backend chặn và người
-// dùng sẽ bực nếu chỉ biết khi bấm vào rồi bị từ chối:
-//   - Khoá chưa có bài nào thì không gửi duyệt được.
-//   - Khoá đang Chờ duyệt thì không sửa được (Admin đang xem bản đó).
-//
-// Ô soạn nội dung cố ý chỉ là một textarea. Bản kế hoạch trước có trình soạn
-// theo khối với sáu loại khối — phần tốn công nhất của cả mảng học tập, đổi
-// lại một khoảng giá trị nhỏ.
+// Soạn LỘ TRÌNH ÔN TẬP — chuỗi chặng đưa thí sinh tới một trình độ thi.
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  AlertCircle, BookOpen, CheckCircle2, ChevronRight, Clock, Edit3,
-  FileText, Loader2, Plus, Send, Trash2, X,
+  AlertCircle, BookOpen, CheckCircle2, ChevronRight, ClipboardCheck, Clock, Edit3,
+  FileText, Loader2, Plus, Route, Send, Trash2, X,
 } from 'lucide-react';
 import courseService from '../../services/courseService';
 import roomService from '../../services/roomService';
+import * as teacherExamService from '../../services/teacherExamService';
 import './TeacherDashboard.css';
+
+const DEFAULT_PASS_PERCENT = 60;
 
 const STATUS = {
   DRAFT:     { label: 'Nháp',        cls: 'draft',    hint: 'Chỉ mình bạn thấy' },
   PENDING:   { label: 'Chờ duyệt',   cls: 'upcoming', hint: 'Quản trị viên đang xem — không sửa được lúc này' },
-  PUBLISHED: { label: 'Đã xuất bản', cls: 'open',     hint: 'Thí sinh đang học được' },
+  PUBLISHED: { label: 'Đã xuất bản', cls: 'open',     hint: 'Thí sinh đang ôn theo lộ trình này' },
   REJECTED:  { label: 'Bị trả lại',  cls: 'closed',   hint: 'Sửa theo góp ý rồi gửi lại' },
 };
 
@@ -63,7 +54,7 @@ function Toast({ message, type, onClose }) {
   );
 }
 
-// ─── Modal: tạo / sửa khoá ───────────────────────────────────────
+// ─── Modal: tạo / sửa lộ trình ───────────────────────────────────
 
 function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
   const [form, setForm] = useState({
@@ -76,7 +67,7 @@ function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
 
   const submit = (e) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError('Chưa đặt tên khoá học'); return; }
+    if (!form.title.trim()) { setError('Chưa đặt tên lộ trình'); return; }
     setError(null);
     onSave({
       title: form.title.trim(),
@@ -89,7 +80,7 @@ function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
     <div className="td-modal-overlay" onClick={onClose}>
       <div className="td-modal" onClick={(e) => e.stopPropagation()}>
         <div className="td-modal-header">
-          <h3>{initial ? 'Sửa khoá học' : 'Tạo khoá học mới'}</h3>
+          <h3>{initial ? 'Sửa lộ trình ôn tập' : 'Tạo lộ trình ôn tập'}</h3>
           <button className="td-close-btn" onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={submit}>
@@ -103,22 +94,22 @@ function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
 
             <div className="td-form-group full">
               <label className="td-form-label">
-                <BookOpen size={14} /> Tên khoá học <span className="required">*</span>
+                <Route size={14} /> Tên lộ trình <span className="required">*</span>
               </label>
               <input className="td-form-input" value={form.title} autoFocus
                      onChange={(e) => set('title', e.target.value)}
-                     placeholder="VD: Ngữ pháp N5 — 6 mẫu câu nền tảng" />
+                     placeholder="VD: Lộ trình N5 — ngữ pháp nền tảng trong 6 chặng" />
             </div>
 
             <div className="td-form-group full">
-              <label className="td-form-label">Mô tả ngắn</label>
+              <label className="td-form-label">Mục tiêu</label>
               <textarea className="td-form-input" rows={2} value={form.description}
                         onChange={(e) => set('description', e.target.value)}
-                        placeholder="Khoá này dạy gì, cho ai" />
+                        placeholder="Đi hết lộ trình này thì thí sinh làm được gì trong đề thi" />
             </div>
 
             <div className="td-form-group full">
-              <label className="td-form-label">Trình độ</label>
+              <label className="td-form-label">Trình độ hướng tới</label>
               <select className="td-form-select" value={form.levelId}
                       onChange={(e) => set('levelId', e.target.value)}>
                 <option value="">Không gắn trình độ</option>
@@ -132,7 +123,7 @@ function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
 
             {!initial && (
               <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-mute)', lineHeight: 1.6 }}>
-                Khoá mới ở dạng <strong>Nháp</strong>. Thêm bài học rồi gửi duyệt;
+                Lộ trình mới ở dạng <strong>Nháp</strong>. Thêm các chặng rồi gửi duyệt;
                 quản trị viên duyệt xong thí sinh mới thấy.
               </p>
             )}
@@ -149,27 +140,39 @@ function CourseFormModal({ initial, levels, onClose, onSave, saving }) {
   );
 }
 
-// ─── Modal: tạo / sửa bài học ────────────────────────────────────
+// ─── Modal: tạo / sửa chặng ──────────────────────────────────────
 
-function LessonFormModal({ initial, onClose, onSave, saving }) {
+/** @param exams đề của người ra đề (chỉ đề công khai mới làm bài kiểm tra chặng được). */
+function LessonFormModal({ initial, exams, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     title: initial?.title ?? '',
     lessonType: initial?.lessonType ?? 'GRAMMAR',
     content: initial?.content ?? '',
     estimatedMinutes: initial?.estimatedMinutes == null ? '' : String(initial.estimatedMinutes),
+    examId: initial?.examId == null ? '' : String(initial.examId),
+    minScorePercent: initial?.minScorePercent == null ? '' : String(initial.minScorePercent),
   });
   const [error, setError] = useState(null);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const publicExams = exams.filter((ex) => ex.isPublic);
 
   const submit = (e) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError('Chưa đặt tên bài học'); return; }
+    if (!form.title.trim()) { setError('Chưa đặt tên chặng'); return; }
+    const pass = form.minScorePercent === '' ? null : Number(form.minScorePercent);
+    if (pass != null && (pass < 1 || pass > 100)) {
+      setError('Điểm tối thiểu để qua chặng phải từ 1 đến 100%'); return;
+    }
     setError(null);
     onSave({
       title: form.title.trim(),
       lessonType: form.lessonType,
       content: form.content,
       estimatedMinutes: form.estimatedMinutes === '' ? null : Number(form.estimatedMinutes),
+      examId: form.examId === '' ? null : Number(form.examId),
+      minScorePercent: form.examId === '' ? null : pass,
+      // Server gán lại bộ thẻ từ request mỗi lần lưu — không gửi lại là xoá mất bộ thẻ đã gắn.
+      deckId: initial?.deckId ?? null,
     });
   };
 
@@ -177,7 +180,7 @@ function LessonFormModal({ initial, onClose, onSave, saving }) {
     <div className="td-modal-overlay" onClick={onClose}>
       <div className="td-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680 }}>
         <div className="td-modal-header">
-          <h3>{initial ? 'Sửa bài học' : 'Thêm bài học'}</h3>
+          <h3>{initial ? 'Sửa chặng' : 'Thêm chặng'}</h3>
           <button className="td-close-btn" onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={submit}>
@@ -192,7 +195,7 @@ function LessonFormModal({ initial, onClose, onSave, saving }) {
             <div className="td-form-row">
               <div className="td-form-group">
                 <label className="td-form-label">
-                  Tên bài <span className="required">*</span>
+                  Tên chặng <span className="required">*</span>
                 </label>
                 <input className="td-form-input" value={form.title} autoFocus
                        onChange={(e) => set('title', e.target.value)}
@@ -237,11 +240,43 @@ function LessonFormModal({ initial, onClose, onSave, saving }) {
                 không chứa nổi.
               </p>
             </div>
+
+            <div className="td-form-row">
+              <div className="td-form-group">
+                <label className="td-form-label">
+                  <ClipboardCheck size={14} /> Bài kiểm tra cuối chặng
+                </label>
+                <select className="td-form-select" value={form.examId}
+                        onChange={(e) => set('examId', e.target.value)}>
+                  <option value="">Không có — đọc xong là qua chặng</option>
+                  {publicExams.map((ex) => (
+                    <option key={ex.examId} value={ex.examId}>
+                      {ex.title} ({ex.totalQuestions} câu)
+                    </option>
+                  ))}
+                </select>
+                <p className="td-form-hint">
+                  Chỉ đề tự do (công khai). Đề chỉ nằm trong phòng thi thì thí sinh theo
+                  lộ trình không vào làm được.
+                </p>
+              </div>
+              <div className="td-form-group">
+                <label className="td-form-label">Điểm tối thiểu để qua (%)</label>
+                <input className="td-form-input" type="number" min="1" max="100"
+                       value={form.minScorePercent}
+                       disabled={form.examId === ''}
+                       onChange={(e) => set('minScorePercent', e.target.value)}
+                       placeholder={`Mặc định ${DEFAULT_PASS_PERCENT}`} />
+                <p className="td-form-hint">
+                  Thí sinh phải đạt mức này ở bài kiểm tra mới mở được chặng kế tiếp.
+                </p>
+              </div>
+            </div>
           </div>
           <div className="td-modal-footer">
             <button type="button" className="td-btn-secondary" onClick={onClose}>Huỷ</button>
             <button type="submit" className="td-btn-primary" disabled={saving}>
-              {saving ? <><Loader2 size={14} className="td-spin" /> Đang lưu…</> : 'Lưu bài học'}
+              {saving ? <><Loader2 size={14} className="td-spin" /> Đang lưu…</> : 'Lưu chặng'}
             </button>
           </div>
         </form>
@@ -250,10 +285,11 @@ function LessonFormModal({ initial, onClose, onSave, saving }) {
   );
 }
 
-// ─── Modal: danh sách bài của một khoá ───────────────────────────
+// ─── Modal: các chặng của một lộ trình ───────────────────────────
 
 function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
   const [detail, setDetail] = useState(null);
+  const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lessonModal, setLessonModal] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -263,7 +299,12 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setDetail(await courseService.getCourse(course.courseId));
+      const [d, ex] = await Promise.all([
+        courseService.getCourse(course.courseId),
+        teacherExamService.getMyExams().catch(() => []),
+      ]);
+      setDetail(d);
+      setExams(ex ?? []);
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -282,7 +323,7 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
       setDetail(updated);
       setLessonModal(null);
       onChanged();
-      showToast(lessonModal?.lessonId ? 'Đã cập nhật bài học' : 'Đã thêm bài học');
+      showToast(lessonModal?.lessonId ? 'Đã cập nhật chặng' : 'Đã thêm chặng');
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
@@ -291,11 +332,11 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
   };
 
   const removeLesson = async (lesson) => {
-    if (!window.confirm(`Xoá bài "${lesson.title}"?`)) return;
+    if (!window.confirm(`Xoá chặng "${lesson.title}"?`)) return;
     try {
       setDetail(await courseService.deleteLesson(course.courseId, lesson.lessonId));
       onChanged();
-      showToast('Đã xoá bài học');
+      showToast('Đã xoá chặng');
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -343,13 +384,13 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
                 {editable && (
                   <button className="td-btn-primary" style={{ marginBottom: 14 }}
                           onClick={() => setLessonModal({})}>
-                    <Plus size={14} /> Thêm bài học
+                    <Plus size={14} /> Thêm chặng
                   </button>
                 )}
 
                 {(detail?.lessons ?? []).length === 0 ? (
                   <div className="td-empty" style={{ padding: '28px 12px' }}>
-                    Chưa có bài nào. Khoá rỗng thì không gửi duyệt được.
+                    Chưa có chặng nào. Lộ trình rỗng thì không gửi duyệt được.
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -372,7 +413,14 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
                           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--ink-faint)' }}>
                             {LESSON_TYPES.find((t) => t.value === l.lessonType)?.label}
                             {l.estimatedMinutes ? ` · ${l.estimatedMinutes} phút` : ''}
+                            {l.hasDeck ? ' · có bộ thẻ' : ''}
                           </p>
+                          {l.hasExam && (
+                            <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'var(--violet)' }}>
+                              <ClipboardCheck size={11} style={{ verticalAlign: -1 }} /> Kiểm tra: {l.examTitle}
+                              {' · '}đạt từ {l.minScorePercent ?? DEFAULT_PASS_PERCENT}% mới qua
+                            </p>
+                          )}
                         </div>
                         {editable && (
                           <>
@@ -402,6 +450,7 @@ function CourseLessonsModal({ course, onClose, onChanged, showToast }) {
       {lessonModal && (
         <LessonFormModal
           initial={lessonModal.lessonId ? lessonModal : null}
+          exams={exams}
           saving={saving}
           onClose={() => setLessonModal(null)}
           onSave={saveLesson}
@@ -435,7 +484,7 @@ export default function CourseManager() {
       setCourses(cs);
       setLevels(lvs);
     } catch (err) {
-      showToast(err.message || 'Không tải được danh sách khoá học', 'error');
+      showToast(err.message || 'Không tải được danh sách lộ trình', 'error');
     } finally {
       setLoading(false);
     }
@@ -448,10 +497,10 @@ export default function CourseManager() {
     try {
       if (formModal?.courseId) {
         await courseService.updateCourse(formModal.courseId, data);
-        showToast('Đã cập nhật khoá học');
+        showToast('Đã cập nhật lộ trình');
       } else {
         await courseService.createCourse(data);
-        showToast('Đã tạo khoá học ở dạng nháp — thêm bài rồi gửi duyệt');
+        showToast('Đã tạo lộ trình ở dạng nháp — thêm chặng rồi gửi duyệt');
       }
       setFormModal(null);
       await load();
@@ -475,10 +524,10 @@ export default function CourseManager() {
   };
 
   const remove = async (course) => {
-    if (!window.confirm(`Xoá khoá "${course.title}"?`)) return;
+    if (!window.confirm(`Xoá lộ trình "${course.title}"?`)) return;
     try {
       await courseService.deleteCourse(course.courseId);
-      showToast('Đã xoá khoá học');
+      showToast('Đã xoá lộ trình');
       await load();
     } catch (err) {
       showToast(err.message, 'error');
@@ -496,7 +545,7 @@ export default function CourseManager() {
             <BookOpen size={18} color="var(--violet)" />
           </div>
           <div className="td-stat-body">
-            <p className="td-stat-label">Khoá đã soạn</p>
+            <p className="td-stat-label">Lộ trình đã soạn</p>
             <p className="td-stat-value">{courses.length}</p>
           </div>
         </div>
@@ -526,15 +575,15 @@ export default function CourseManager() {
       }}>
         <div>
           <h2 style={{ fontFamily: 'var(--heading)', fontSize: 17, margin: 0, color: 'var(--ink)' }}>
-            Khoá học
+            Lộ trình ôn tập
           </h2>
           <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--ink-faint)', maxWidth: '64ch' }}>
-            Nơi soạn ngữ pháp và chữ Hán — hai thứ không nhét vừa một tấm thẻ lật.
-            Soạn xong gửi duyệt; quản trị viên duyệt rồi thí sinh mới thấy.
+            Chuỗi chặng đưa thí sinh tới trình độ thi: học lý thuyết → ôn thẻ → làm bài kiểm tra.
+            Chặng mở tuần tự, có bài kiểm tra thì phải đạt mới qua. Soạn xong gửi duyệt.
           </p>
         </div>
         <button className="td-btn-primary" onClick={() => setFormModal({})}>
-          <Plus size={15} /> Tạo khoá học
+          <Plus size={15} /> Tạo lộ trình
         </button>
       </div>
 
@@ -543,9 +592,9 @@ export default function CourseManager() {
       ) : courses.length === 0 ? (
         <div className="td-empty">
           <BookOpen size={26} style={{ opacity: 0.4 }} />
-          <p style={{ margin: '10px 0 0' }}>Chưa có khoá học nào.</p>
+          <p style={{ margin: '10px 0 0' }}>Chưa có lộ trình nào.</p>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>
-            Tạo một khoá, thêm bài lý thuyết rồi gửi duyệt.
+            Tạo một lộ trình, thêm các chặng rồi gửi duyệt.
           </p>
         </div>
       ) : (
@@ -583,10 +632,10 @@ export default function CourseManager() {
                 }}>
                   <FileText size={12} />
                   <span style={{ color: course.totalLessons === 0 ? 'var(--gold)' : undefined }}>
-                    {course.totalLessons} bài
+                    {course.totalLessons} chặng
                   </span>
                   <span>·</span>
-                  <span>{course.enrolledCount} người học</span>
+                  <span>{course.enrolledCount} người đang theo</span>
                   {course.levelName && (
                     <span style={{ marginLeft: 'auto', fontWeight: 700 }}>{course.levelName}</span>
                   )}
@@ -594,14 +643,14 @@ export default function CourseManager() {
 
                 <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 2 }}>
                   <button className="td-btn-ghost" onClick={() => setLessonsFor(course)}>
-                    <FileText size={13} /> Bài học <ChevronRight size={12} />
+                    <FileText size={13} /> Các chặng <ChevronRight size={12} />
                   </button>
 
                   {(course.status === 'DRAFT' || course.status === 'REJECTED') && (
                     <button
                       className="td-btn-ghost"
                       title={course.totalLessons === 0
-                        ? 'Cần ít nhất một bài học trước khi gửi duyệt'
+                        ? 'Cần ít nhất một chặng trước khi gửi duyệt'
                         : 'Gửi cho quản trị viên duyệt'}
                       disabled={course.totalLessons === 0}
                       onClick={() => submit(course)}

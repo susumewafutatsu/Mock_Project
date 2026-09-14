@@ -25,9 +25,7 @@ createRoot(document.getElementById('root')).render(
           {/* Backend redirect về đây kèm ?accessToken=...&refreshToken=... sau khi Google SSO thành công */}
           <Route path="/auth/callback" element={<CallbackPage />} />
           
-          {/* Admin routes — màn hình còn là khung rỗng, nhưng phải có route thật:
-              HOME_BY_ROLE trỏ ADMIN về đây, thiếu route thì URL rơi vào
-              HomeRedirect và chuyển hướng vòng tròn vô tận. */}
+          {/* Admin routes — màn hình còn là khung rỗng, nhưng phải có route thật. */}
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
               <AdminDashboard />

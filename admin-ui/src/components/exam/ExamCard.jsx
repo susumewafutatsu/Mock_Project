@@ -1,7 +1,5 @@
 // src/components/exam/ExamCard.jsx
-// TODO: Card to display exam info in list view
-// Props: exam (object), onStart (fn), onViewResult (fn)
-// Shows: title, subject, duration, scheduled time, status badge
+// TODO: Card to display exam info in list view Props: exam (object), onStart (fn), onViewResult (fn) Shows.
 
 const ExamCard = ({ exam, onStart, onViewResult }) => {
   return (
