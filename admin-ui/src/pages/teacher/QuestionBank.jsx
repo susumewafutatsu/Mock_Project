@@ -4,9 +4,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus, Search, Edit3, Trash2, BookOpen, AlertCircle, Lock,
-  ChevronLeft, ChevronRight, X,
+  ChevronLeft, ChevronRight, X, FileUp,
 } from 'lucide-react';
 import QuestionForm from '../../components/question/QuestionForm';
+import ImportQuestionsModal from '../../components/question/ImportQuestionsModal';
 import examStructureService from '../../services/examStructureService';
 import * as questionService from '../../services/questionService';
 import roomService from '../../services/roomService';
@@ -140,6 +141,7 @@ const QuestionBank = () => {
 
   const [editing, setEditing] = useState(null);   // { ...question } | 'new' | null
   const [showNewBank, setShowNewBank] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [creatingBank, setCreatingBank] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -294,6 +296,13 @@ const QuestionBank = () => {
             </select>
             <button className="td-btn-secondary" onClick={() => setShowNewBank(true)}>
               <Plus size={15} /> Ngân hàng mới
+            </button>
+            <button
+              className="td-btn-secondary"
+              onClick={() => setShowImport(true)}
+              disabled={!bankId}
+            >
+              <FileUp size={15} /> Import từ file
             </button>
             <button
               className="td-btn-primary"
@@ -474,6 +483,18 @@ const QuestionBank = () => {
           onClose={() => setShowNewBank(false)}
           onCreate={handleCreateBank}
           creating={creatingBank}
+        />
+      )}
+
+      {showImport && (
+        <ImportQuestionsModal
+          bankId={bankId}
+          onClose={() => setShowImport(false)}
+          onImported={async () => {
+            setShowImport(false);
+            await loadQuestions();
+            await refreshBankCounts();
+          }}
         />
       )}
 

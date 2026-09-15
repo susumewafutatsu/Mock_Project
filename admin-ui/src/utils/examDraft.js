@@ -1,6 +1,3 @@
-// src/utils/examDraft.js
-// Bản nháp đáp án của phòng thi, nằm trong localStorage.
-
 const PREFIX = 'exam:draft:';
 
 /** Sau hạn phiên vẫn giữ thêm một chút, phòng đồng hồ máy lệch với server. */

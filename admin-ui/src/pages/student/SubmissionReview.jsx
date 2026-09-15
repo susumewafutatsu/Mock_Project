@@ -122,8 +122,6 @@ function QuestionCard({ detail, order, revealed, marked, onToggleMark }) {
           />
         ))
       ) : (
-        // Đề cũ có thể thiếu snapshot lựa chọn. Vẫn nói được hai điều quan
-        // trọng nhất thay vì để trống cả câu.
         <div className="sr-essay empty">
           {detail.selectedAnswerContent
             ? `Bạn chọn: ${detail.selectedAnswerContent}`

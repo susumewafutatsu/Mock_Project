@@ -597,8 +597,7 @@ export default function StudentDashboard() {
       {/* ── SIDEBAR ── */}
       <aside className="sd-sidebar">
         <div className="sd-logo">
-          {/* Tên thương hiệu mang chất tiên hiệp. */}
-          <h2>⛩️ Tàng Thư Các</h2>
+          <h2>🐳 Lumi Study</h2>
           <p>Cổng học viên</p>
         </div>
 
