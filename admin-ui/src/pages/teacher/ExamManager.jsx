@@ -978,7 +978,7 @@ export default function TeacherDashboard() {
       {/* ── SIDEBAR ── */}
       <aside className="td-sidebar">
         <div className="td-sidebar-logo">
-          <h2>⛩️ Tàng Thư Các</h2>
+          <h2>🐳 Lumi Study</h2>
           <p>Cổng người ra đề</p>
         </div>
 

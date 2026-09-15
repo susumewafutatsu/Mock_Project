@@ -10,9 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Cloud,
-  CloudOff,
-  HardDrive,
   Info,
   Loader2,
   Send,
@@ -225,7 +222,6 @@ export default function ExamRoom() {
     reload: reloadQueue,
     pendingIds,
     pendingCount,
-    saving,
     failing,
   } = useAnswerSync({
     examId,
@@ -564,15 +560,6 @@ export default function ExamRoom() {
       .catch((err) => { if (err.status === 404) setRoomExam(true); });
   }, [phase, examId]);
 
-  // Bốn trạng thái lưu. "Trên máy" là bình thường — đáp án an toàn, chỉ chưa tới lượt gửi.
-  const saveTone = saving ? 'saving' : failing ? 'failed' : pendingCount > 0 ? 'local' : 'saved';
-  const saveLabel = {
-    saving: 'Đang gửi…',
-    failed: `${pendingCount} câu chưa gửi được`,
-    local: `Đã lưu trên máy · chờ gửi ${pendingCount} câu`,
-    saved: 'Đã lưu',
-  }[saveTone];
-
   const goBackToList = () => navigate('/student/exams');
 
   // ── Các trạng thái toàn trang ─────────────────────────────────────
@@ -722,19 +709,6 @@ export default function ExamRoom() {
             )}
           </p>
         </div>
-
-        <span className={`er-status ${saveTone === 'local' ? 'saving' : saveTone}`}>
-          {saveTone === 'saving' ? (
-            <Loader2 size={14} className="er-spin" />
-          ) : saveTone === 'failed' ? (
-            <CloudOff size={14} />
-          ) : saveTone === 'local' ? (
-            <HardDrive size={14} />
-          ) : (
-            <Cloud size={14} />
-          )}
-          {saveLabel}
-        </span>
 
         <span
           className={`er-clock ${timer.isExpired ? 'expired' : timer.isCritical ? 'critical' : ''

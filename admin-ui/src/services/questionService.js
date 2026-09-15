@@ -52,6 +52,32 @@ export async function deleteQuestion(bankId, questionId) {
   await api.delete(`/teacher/question-banks/${bankId}/questions/${questionId}`);
 }
 
+/** Lưu hàng loạt câu hỏi (dùng sau khi import từ file + AI sinh + giáo viên duyệt). */
+export async function createQuestionsBulk(bankId, questions) {
+  const { data } = await api.post(`/teacher/question-banks/${bankId}/questions/bulk`, questions);
+  return data.data;
+}
+
+// ── Import câu hỏi từ PDF/Word ─────────────────────────────────────
+
+/** Trích văn bản thô từ file PDF/Word → { text } */
+export async function extractDocumentText(bankId, file) {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await api.post(
+    `/teacher/question-banks/${bankId}/imports/extract-text`,
+    form,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+  return data.data.text;
+}
+
+/** Nhờ Gemini sinh câu hỏi nháp từ văn bản → QuestionCreateRequest[] (chưa lưu). */
+export async function generateQuestionsFromText(bankId, payload) {
+  const { data } = await api.post(`/teacher/question-banks/${bankId}/imports/generate`, payload);
+  return data.data;
+}
+
 // ── Câu hỏi trong đề thi (snapshot) ──────────────────────────────────
 
 /** Gắn câu hỏi vào đề thi. Backend chụp snapshot nội dung + đáp án ngay lúc này. */
